@@ -1,16 +1,16 @@
 from pydantic import BaseModel, Field
-from typing import List, Literal, Optional, cast
+from typing import Literal, cast
 from phospho.models import ProjectDataFilters
 
 
 class AggregateMetricsRequest(BaseModel):
-    index: List[Literal["days", "minutes"]] = Field(
+    index: list[Literal["days", "minutes"]] = Field(
         default_factory=lambda: [cast(Literal["days", "minutes"], "days")]
     )
-    columns: List[Literal["event_name", "flag"]] = Field(default_factory=list)
-    count_of: Optional[Literal["tasks", "events"]] = "tasks"
-    timerange: Optional[Literal["last_7_days", "last_30_minutes"]] = "last_7_days"
-    filters: Optional[ProjectDataFilters] = None
+    columns: list[Literal["event_name", "flag"]] = Field(default_factory=list)
+    count_of: Literal["tasks", "events"] | None = "tasks"
+    timerange: Literal["last_7_days", "last_30_minutes"] | None = "last_7_days"
+    filters: ProjectDataFilters | None = None
     limit: int = 1000
 
 
@@ -19,11 +19,11 @@ class EventsMetricsFilter(BaseModel):
 
 
 class ABTestVersions(BaseModel):
-    versionA: Optional[str]
-    versionB: Optional[str]
-    selected_events_ids: Optional[List[str]]
-    filtersA: Optional[ProjectDataFilters]
-    filtersB: Optional[ProjectDataFilters]
+    versionA: str | None
+    versionB: str | None
+    selected_events_ids: list[str] | None
+    filtersA: ProjectDataFilters | None
+    filtersB: ProjectDataFilters | None
 
 
 class ClusteringEmbeddingCloud(BaseModel):
@@ -36,7 +36,7 @@ class ClusteringEmbeddingCloud(BaseModel):
 
 
 class DashboardMetricsFilter(BaseModel):
-    graph_name: Optional[List[str]] = None
+    graph_name: list[str] | None = None
 
 
 class Pagination(BaseModel):
@@ -51,23 +51,23 @@ class Sorting(BaseModel):
 
 class QuerySessionsTasksRequest(BaseModel):
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
-    pagination: Optional[Pagination] = None
-    sorting: Optional[List[Sorting]] = None
+    pagination: Pagination | None = None
+    sorting: list[Sorting] | None = None
 
 
 class QueryUserMetadataRequest(BaseModel):
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
-    pagination: Optional[Pagination] = None
-    sorting: Optional[List[Sorting]] = None
-    user_id_search: Optional[str] = None
+    pagination: Pagination | None = None
+    sorting: list[Sorting] | None = None
+    user_id_search: str | None = None
 
 
 class DetectClustersRequest(BaseModel):
-    limit: Optional[int] = None
-    filters: Optional[ProjectDataFilters] = Field(default_factory=ProjectDataFilters)
+    limit: int | None = None
+    filters: ProjectDataFilters | None = Field(default_factory=ProjectDataFilters)
     scope: Literal["messages", "sessions", "users"] = "messages"
-    instruction: Optional[str] = "user intent"
-    nb_clusters: Optional[int] = None
+    instruction: str | None = "user intent"
+    nb_clusters: int | None = None
     clustering_mode: Literal["agglomerative", "dbscan"] = "agglomerative"
     output_format: Literal[
         "title_description", "user_persona", "question_and_answer"
@@ -75,17 +75,17 @@ class DetectClustersRequest(BaseModel):
 
 
 class FetchClustersRequest(BaseModel):
-    clustering_id: Optional[str] = None
+    clustering_id: str | None = None
     limit: int = 100
 
 
 class AggregatedSessionsRequest(BaseModel):
-    metrics: List[str] = Field(default_factory=list)
+    metrics: list[str] = Field(default_factory=list)
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
-    limit: Optional[int] = None
+    limit: int | None = None
 
 
 class ClusteringCostRequest(BaseModel):
     scope: Literal["messages", "sessions", "users"] = "messages"
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
-    limit: Optional[int] = None
+    limit: int | None = None

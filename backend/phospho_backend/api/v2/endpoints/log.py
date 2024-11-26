@@ -1,5 +1,4 @@
 import sys
-from typing import List, Union
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
@@ -51,7 +50,7 @@ async def store_batch_of_log_events(
     # raise_error_if_not_in_pro_tier(org)
 
     # We return the valid log events
-    logged_events: List[Union[LogEvent, LogError]] = []
+    logged_events: list[LogEvent | LogError] = []
 
     usage_quota = await get_quota(project_id)
     current_usage = usage_quota.current_usage
@@ -60,8 +59,8 @@ async def store_batch_of_log_events(
     logger.info(
         f"Project {project_id} received {len(log_request.batched_log_events)} logs"
     )
-    logs_to_process: List[LogEvent] = []
-    extra_logs_to_save: List[LogEvent] = []
+    logs_to_process: list[LogEvent] = []
+    extra_logs_to_save: list[LogEvent] = []
 
     for log_event_model in log_request.batched_log_events:
         # We now validate the logs

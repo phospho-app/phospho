@@ -1,5 +1,5 @@
 import datetime
-from typing import Dict, List, Optional, Union, cast
+from typing import cast
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
@@ -157,7 +157,7 @@ async def get_dashboard_project_metrics(
     project_id: str,
     request: AggregateMetricsRequest,
     user: User = Depends(propelauth.require_user),
-) -> List[dict]:
+) -> list[dict]:
     """
     Get aggregated metrics for a project. Used for dashboard.
     """
@@ -182,8 +182,8 @@ async def get_dashboard_project_metrics(
 )
 async def get_tasks_project_metrics(
     project_id: str,
-    metrics: Optional[List[str]] = None,
-    filters: Optional[ProjectDataFilters] = None,
+    metrics: list[str] | None = None,
+    filters: ProjectDataFilters | None = None,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     """
@@ -270,9 +270,9 @@ async def get_project_metrics(
     if isinstance(filters.created_at_end, datetime.datetime):
         filters.created_at_end = int(filters.created_at_end.timestamp())
 
-    nb_elements: Optional[int] = None
-    clustering_cost: Optional[int] = None
-    output: Dict[str, Optional[float]] = {}
+    nb_elements: int | None = None
+    clustering_cost: int | None = None
+    output: dict[str, float | None] = {}
     logger.info(f"Clustering cost request: {query.model_dump()}")
 
     if query.scope == "sessions":
@@ -347,8 +347,8 @@ async def get_project_metrics(
 )
 async def get_events_project_metrics(
     project_id: str,
-    metrics: Optional[List[str]] = None,
-    filters: Optional[ProjectDataFilters] = None,
+    metrics: list[str] | None = None,
+    filters: ProjectDataFilters | None = None,
     user: User = Depends(propelauth.require_user),
 ):
     """
@@ -377,8 +377,8 @@ async def get_events_project_metrics(
 )
 async def get_users_project_metrics(
     project_id: str,
-    metrics: Optional[List[str]] = None,
-    filters: Optional[ProjectDataFilters] = None,
+    metrics: list[str] | None = None,
+    filters: ProjectDataFilters | None = None,
     user: User = Depends(propelauth.require_user),
 ):
     """
@@ -409,7 +409,7 @@ async def get_users_project_metrics(
 async def get_filtered_events(
     project_id: str,
     limit: int = 1000,
-    filters: Optional[ProjectDataFilters] = None,
+    filters: ProjectDataFilters | None = None,
     user: User = Depends(propelauth.require_user),
 ) -> Events:
     await verify_if_propelauth_user_can_access_project(user, project_id)
@@ -484,7 +484,7 @@ async def post_selected_clustering(
 )
 async def post_all_clusters(
     project_id: str,
-    query: Optional[FetchClustersRequest] = None,
+    query: FetchClustersRequest | None = None,
     user: User = Depends(propelauth.require_user),
 ) -> Clusters:
     """
@@ -648,7 +648,7 @@ async def post_detect_clusters(
 )
 async def get_dashboard_graphs(
     project_id: str,
-    metric: Optional[DashboardMetricsFilter] = None,
+    metric: DashboardMetricsFilter | None = None,
     user: User = Depends(propelauth.require_user),
 ):
     await verify_if_propelauth_user_can_access_project(user, project_id)
@@ -669,8 +669,8 @@ async def get_dashboard_graphs(
 async def get_event_detection_metrics(
     project_id: str,
     event_id: str,
-    metrics: Optional[List[str]] = None,
-    filters: Optional[ProjectDataFilters] = None,
+    metrics: list[str] | None = None,
+    filters: ProjectDataFilters | None = None,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     """
@@ -711,7 +711,7 @@ async def get_ab_tests_comparison(
     project_id: str,
     versions: ABTestVersions,
     user: User = Depends(propelauth.require_user),
-) -> List[Dict[str, Union[str, float, int]]]:
+) -> list[dict[str, str | float | int]]:
     await verify_if_propelauth_user_can_access_project(user, project_id)
     logger.debug(f"AB tests comparison: {versions}")
     output = await get_ab_tests_versions(

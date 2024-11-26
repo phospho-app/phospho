@@ -1,4 +1,4 @@
-from typing import List, Any, Optional
+from typing import Any
 from phospho_backend.services.mongo.extractor import bill_on_stripe
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.db.models import JobResult
@@ -27,9 +27,9 @@ async def bill_input_and_output_tokens(
 async def metered_prediction(
     org_id: str,
     model_id: str,
-    inputs: List[Any],
-    predictions: List[Any],
-    project_id: Optional[str] = None,
+    inputs: list[Any],
+    predictions: list[Any],
+    project_id: str | None = None,
     bill: bool = True,
 ) -> None:
     """

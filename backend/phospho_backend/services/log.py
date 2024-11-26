@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 from phospho_backend.api.v2.models import LogEvent
 from phospho_backend.db.mongo import get_mongo_db
@@ -15,8 +15,8 @@ from phospho.utils import filter_nonjsonable_keys, is_jsonable
 
 
 async def create_task_and_process_logs(
-    logs_to_process: List[LogEvent],
-    extra_logs_to_save: List[LogEvent],
+    logs_to_process: list[LogEvent],
+    extra_logs_to_save: list[LogEvent],
     project_id: str,
     org_id: str,
 ):
@@ -102,7 +102,7 @@ async def create_task_and_process_logs(
 async def process_log_with_session_id(
     project_id: str,
     org_id: str,
-    list_of_log_event: List[LogEvent],
+    list_of_log_event: list[LogEvent],
     trigger_pipeline: bool = True,
 ) -> None:
     """
@@ -115,10 +115,10 @@ async def process_log_with_session_id(
     logger.info(
         f"Project {project_id}: processing {len(list_of_log_event)} log events with session_id"
     )
-    tasks_id_to_process: List[str] = []
-    tasks_to_create: List[Dict[str, object]] = []
-    sessions_to_create: Dict[str, Dict[str, Any]] = {}
-    sessions_to_earliest_task: Dict[str, Task] = {}
+    tasks_id_to_process: list[str] = []
+    tasks_to_create: list[dict[str, object]] = []
+    sessions_to_create: dict[str, dict[str, Any]] = {}
+    sessions_to_earliest_task: dict[str, Task] = {}
 
     mongo_db = await get_mongo_db()
     sessions_ids_already_in_db = (
@@ -163,7 +163,7 @@ async def process_log_with_session_id(
             and log_event.session_id not in sessions_to_create.keys()
         ):
             # Add to sessions to create
-            session_data: Dict[str, Any] = {
+            session_data: dict[str, Any] = {
                 "id": log_event.session_id,
                 "project_id": session_project_id,
                 # Note: there is no metadata and data
@@ -243,7 +243,7 @@ async def process_log_with_session_id(
 
     # Add sessions to database
     if len(sessions_to_create) > 0 and len(tasks_to_create) > 0:
-        sessions_to_create_dump: List[dict] = []
+        sessions_to_create_dump: list[dict] = []
         for session_id, session_data in sessions_to_create.items():
             # logger.info(
             #     f"Logevent: creating session with session_id {session_id} from log event"
@@ -364,9 +364,9 @@ def collect_metadata(log_event: LogEvent) -> dict:
 
 
 def convert_additional_data_to_dict(
-    data: Union[dict, str, list, None],
+    data: dict | str | list | None,
     default_key_name: str,
-) -> Optional[dict]:
+) -> dict | None:
     """This conversion function is used so that the additional_input and additional_output are always a dict."""
     if isinstance(data, dict):
         # If it's already a dict, just return it
@@ -382,9 +382,7 @@ def convert_additional_data_to_dict(
         return None
 
 
-def get_time_created_at(
-    client_created_at: Optional[int], created_at: Optional[int]
-) -> int:
+def get_time_created_at(client_created_at: int | None, created_at: int | None) -> int:
     """
     By default, the created_at of the task is the one from the client
     The client can send us weird values. Take care of the most obvious ones:
@@ -403,9 +401,7 @@ def get_time_created_at(
     return client_created_at
 
 
-def get_nb_tokens_prompt_tokens(
-    log_event: LogEvent, model: Optional[str]
-) -> int | None:
+def get_nb_tokens_prompt_tokens(log_event: LogEvent, model: str | None) -> int | None:
     """
     Returns the number of tokens in the prompt tokens, using
     different heuristics depending on the input type.
@@ -448,7 +444,7 @@ def get_nb_tokens_prompt_tokens(
 
 
 def get_nb_tokens_completion_tokens(
-    log_event: LogEvent, model: Optional[str]
+    log_event: LogEvent, model: str | None
 ) -> int | None:
     """
     Returns the number of tokens in the completion tokens, using
@@ -498,9 +494,9 @@ def get_nb_tokens_completion_tokens(
 
 
 async def ignore_existing_tasks(
-    tasks_to_create: List[Dict[str, object]],
-    tasks_id_to_process: List[str],
-) -> Tuple[List[Dict[str, object]], List[str]]:
+    tasks_to_create: list[dict[str, object]],
+    tasks_id_to_process: list[str],
+) -> tuple[list[dict[str, object]], list[str]]:
     """
     Filter out tasks that already exist in the database
     """
@@ -531,8 +527,8 @@ def create_task_from_logevent(
     org_id: str,
     project_id: str,
     log_event: LogEvent,
-    session_id: Optional[str] = None,
-    log_event_metadata: Optional[Dict[str, Any]] = None,
+    session_id: str | None = None,
+    log_event_metadata: dict[str, Any] | None = None,
 ) -> Task:
     if log_event_metadata is None:
         log_event_metadata = {}
@@ -573,15 +569,13 @@ def create_task_from_logevent(
     return task
 
 
-async def compute_task_position(
-    project_id: str, session_ids: Optional[list[str]] = None
-):
+async def compute_task_position(project_id: str, session_ids: list[str] | None = None):
     """
     Executes an aggregation pipeline to compute the task position for each task.
     """
     mongo_db = await get_mongo_db()
 
-    main_filter: Dict[str, object] = {"project_id": project_id}
+    main_filter: dict[str, object] = {"project_id": project_id}
     if session_ids is not None:
         main_filter["id"] = {"$in": session_ids}
 

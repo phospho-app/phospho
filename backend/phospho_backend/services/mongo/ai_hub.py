@@ -4,7 +4,6 @@ Interact with the AI Hub service
 
 from fastapi import HTTPException
 import traceback
-from typing import Optional
 import hashlib
 
 from phospho_backend.services.slack import slack_notification
@@ -27,7 +26,7 @@ from temporalio.exceptions import WorkflowAlreadyStartedError
 from phospho_backend.temporal.pydantic_converter import pydantic_data_converter
 
 
-async def fetch_models(org_id: Optional[str] = None) -> Optional[ModelsResponse]:
+async def fetch_models(org_id: str | None = None) -> ModelsResponse | None:
     """
     List all the models of the AI Hub
     An organization id can be provided to filter the models
@@ -90,7 +89,7 @@ class AIHubClient:
         endpoint: str,
         data: dict,
         hash_data_for_id: bool = True,
-    ) -> Optional[httpx.Response]:
+    ) -> httpx.Response | None:
         """
         Post data to the ai hub temporal worker
         """

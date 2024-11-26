@@ -1,4 +1,3 @@
-from typing import Tuple, Union
 import uuid
 import time
 import re
@@ -59,13 +58,13 @@ def fits_in_context_window(prompt: str, context_window_size: int) -> bool:
     return num_tokens <= context_window_size
 
 
-def get_last_week_timestamps() -> Tuple[int, int]:
+def get_last_week_timestamps() -> tuple[int, int]:
     """
     Returns the UNIX timestamps of the beginning of the day 7 days ago and today
     """
 
     # Get the last week's timestamp
-    today_datetime = datetime.datetime.now(datetime.timezone.utc)
+    today_datetime = datetime.datetime.now(datetime.UTC)
     today_timestamp = int(today_datetime.timestamp())
     seven_days_ago_datetime = today_datetime - datetime.timedelta(days=6)
     # Round to the beginning of the day
@@ -77,7 +76,7 @@ def get_last_week_timestamps() -> Tuple[int, int]:
 
 
 def cast_datetime_or_timestamp_to_timestamp(
-    date_or_ts: Union[datetime.datetime, int],
+    date_or_ts: datetime.datetime | int,
 ) -> int:
     if isinstance(date_or_ts, datetime.datetime):
         return int(date_or_ts.timestamp())

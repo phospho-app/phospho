@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Literal, Optional
+from typing import Literal
 
 import pandas as pd
 import pydantic
@@ -14,7 +14,7 @@ from loguru import logger
 from phospho.models import Recipe, UsageQuota
 
 
-async def get_projects_from_org_id(org_id: str, limit: int = 1000) -> List[Project]:
+async def get_projects_from_org_id(org_id: str, limit: int = 1000) -> list[Project]:
     # Get the projects of the organization, ordered by creation date
     mongo_db = await get_mongo_db()
     project_list = (
@@ -52,9 +52,7 @@ async def get_projects_from_org_id(org_id: str, limit: int = 1000) -> List[Proje
     return projects
 
 
-async def create_project_by_org(
-    org_id: str, user_id: Optional[str], **kwargs
-) -> Project:
+async def create_project_by_org(org_id: str, user_id: str | None, **kwargs) -> Project:
     if "settings" in kwargs:
         if kwargs["settings"] is None:
             # Let the default field creator be used
@@ -109,7 +107,7 @@ async def create_project_by_org(
 async def get_usage_quota(
     org_id: str,
     plan: str,
-    customer_id: Optional[str] = None,
+    customer_id: str | None = None,
     fetch_invoice: bool = True,
 ) -> UsageQuota:
     """
@@ -122,7 +120,7 @@ async def get_usage_quota(
     nb_tasks_logged = await mongo_db["job_results"].count_documents({"org_id": org_id})
 
     # Default config (plan == "hobby")
-    max_usage: Optional[int] = config.PLAN_HOBBY_MAX_NB_DETECTIONS
+    max_usage: int | None = config.PLAN_HOBBY_MAX_NB_DETECTIONS
     max_usage_label = str(config.PLAN_HOBBY_MAX_NB_DETECTIONS)
 
     if plan == "usage_based":
@@ -205,8 +203,8 @@ def fetch_users_from_org(org_id: str):
 
 
 def change_organization_plan(
-    org_id: str, plan: str = "usage_based", customer_id: Optional[str] = None
-) -> Optional[dict]:
+    org_id: str, plan: str = "usage_based", customer_id: str | None = None
+) -> dict | None:
     """
     Upgrade the organization to a usage_based plan
     """
@@ -257,7 +255,7 @@ async def daily_billing_stats(
         "sentiment",
         "language",
     ],
-) -> List[dict]:
+) -> list[dict]:
     """
     Query the job_results table and returns billing stats
     """

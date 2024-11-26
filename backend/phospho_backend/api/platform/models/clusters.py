@@ -1,14 +1,14 @@
 from pydantic import BaseModel, Field
-from typing import List, Literal, Optional
+from typing import Literal
 from phospho.models import Cluster, Clustering, ProjectDataFilters
 
 
 class Clusters(BaseModel):
-    clusters: List[Cluster]
+    clusters: list[Cluster]
 
 
 class Clusterings(BaseModel):
-    clusterings: List[Clustering]
+    clusterings: list[Clustering]
 
 
 class ClusteringRequest(BaseModel):
@@ -19,16 +19,16 @@ class ClusteringRequest(BaseModel):
     ] = "intent-embed-3"
     project_id: str  # Project identifier
     org_id: str
-    limit: Optional[int] = None  # Limit of tasks to be clustered, None means no limit
+    limit: int | None = None  # Limit of tasks to be clustered, None means no limit
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
-    instruction: Optional[str] = "user intent"
-    nb_clusters: Optional[int] = None
+    instruction: str | None = "user intent"
+    nb_clusters: int | None = None
     clustering_mode: Literal["agglomerative", "dbscan"] = "agglomerative"
-    merge_clusters: Optional[bool] = False
-    customer_id: Optional[str] = None
-    clustering_id: Optional[str] = None
-    clustering_name: Optional[str] = None
-    user_email: Optional[str] = None
+    merge_clusters: bool | None = False
+    customer_id: str | None = None
+    clustering_id: str | None = None
+    clustering_name: str | None = None
+    user_email: str | None = None
     scope: Literal["messages", "sessions", "users"] = "messages"
     output_format: Literal[
         "title_description", "user_persona", "question_and_answer"

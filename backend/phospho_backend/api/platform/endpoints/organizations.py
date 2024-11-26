@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 
 from phospho_backend.api.platform.models.organizations import BillingStatsRequest
 import stripe
@@ -151,7 +151,7 @@ async def post_init_org(
             "detail": str(e),
         }
 
-    output: Dict[str, Any] = {}
+    output: dict[str, Any] = {}
 
     # Next page to redirect to
     output["redirect_url"] = "/org/transcripts/sessions"
@@ -637,7 +637,7 @@ async def post_billing_stats(
     org_id: str,
     query: BillingStatsRequest,
     user: User = Depends(propelauth.require_user),
-) -> List[dict]:
+) -> list[dict]:
     propelauth.require_org_member(user, org_id)
     return await daily_billing_stats(
         org_id=org_id,

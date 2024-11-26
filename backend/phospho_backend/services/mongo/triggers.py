@@ -1,11 +1,10 @@
-from typing import List, Dict
 from phospho.models import Task, Session, SessionStats
 from phospho_backend.utils import generate_uuid, get_most_common
 from loguru import logger
 
 
-def aggregate_tasks_into_sessions(tasks: List[Task], project_id: str) -> List[Session]:
-    sessions: Dict[str, Session] = {}
+def aggregate_tasks_into_sessions(tasks: list[Task], project_id: str) -> list[Session]:
+    sessions: dict[str, Session] = {}
     for task in tasks:
         if task.session_id is None:
             task.session_id = generate_uuid()
@@ -36,7 +35,7 @@ def aggregate_tasks_into_sessions(tasks: List[Task], project_id: str) -> List[Se
             else:
                 sessions[task.session_id].tasks = [task]
 
-    validated_sessions: List[Session] = []
+    validated_sessions: list[Session] = []
     # Process each session
     for _, session in sessions.items():
         if session.tasks is None:

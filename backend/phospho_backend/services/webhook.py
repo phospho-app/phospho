@@ -1,11 +1,9 @@
-from typing import Optional
-
 import requests  # type: ignore
 from loguru import logger
 
 
 def trigger_webhook(
-    url: str, json: dict, timeout: int = 1, headers: Optional[dict] = None
+    url: str, json: dict, timeout: int = 1, headers: dict | None = None
 ):
     """
     Function to trigger a webhook.

@@ -1,5 +1,3 @@
-from typing import Dict, List, Optional
-
 from phospho_backend.db.models import EventDefinition
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.utils import cast_datetime_or_timestamp_to_timestamp
@@ -60,14 +58,14 @@ async def get_event_from_name_and_project_id(
 
 async def get_all_events(
     project_id: str,
-    limit: Optional[int] = None,
-    filters: Optional[ProjectDataFilters] = None,
+    limit: int | None = None,
+    filters: ProjectDataFilters | None = None,
     include_removed: bool = False,
     unique: bool = False,
-) -> List[Event]:
+) -> list[Event]:
     mongo_db = await get_mongo_db()
-    additional_event_filters: Dict[str, object] = {}
-    pipeline: List[Dict[str, object]] = []
+    additional_event_filters: dict[str, object] = {}
+    pipeline: list[dict[str, object]] = []
     if filters is not None:
         if filters.event_name is not None:
             if isinstance(filters.event_name, str):
@@ -250,7 +248,7 @@ async def change_value_event(
 
 async def get_last_event_for_task(
     project_id: str, task_id: str, event_name: str
-) -> Optional[Event]:
+) -> Event | None:
     mongo_db = await get_mongo_db()
     event = (
         await mongo_db["events"]

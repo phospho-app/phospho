@@ -1,5 +1,4 @@
 import datetime
-from typing import Dict, List
 from fastapi import APIRouter, Depends
 
 from phospho.models import ProjectDataFilters
@@ -26,12 +25,12 @@ router = APIRouter(tags=["Metadata"])
 @router.post(
     "/metadata/{project_id}/fields",
     description="Get the list of all unique metadata fields in a project.",
-    response_model=Dict[str, List[str]],
+    response_model=dict[str, list[str]],
 )
 async def get_metadata_fields(
     project_id: str,
     user: User = Depends(propelauth.require_user),
-) -> Dict[str, List[str]]:
+) -> dict[str, list[str]]:
     """
     Get the list of all unique metadata fields names in a project.
     """
@@ -51,12 +50,12 @@ async def get_metadata_fields(
 @router.post(
     "/metadata/{project_id}/fields/values",
     description="Get a list of all unique metadata fields values in a project, with their associated unique values.",
-    response_model=Dict[str, Dict[str, List[str]]],
+    response_model=dict[str, dict[str, list[str]]],
 )
 async def get_metadata_fields_values(
     project_id: str,
     user: User = Depends(propelauth.require_user),
-) -> Dict[str, Dict[str, List[str]]]:
+) -> dict[str, dict[str, list[str]]]:
     """
     Get the list of all unique metadata fields values in a project.
     """

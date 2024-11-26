@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import Optional
 
 from phospho_backend.api.v3.models.log import (
     LogError,
@@ -32,7 +32,7 @@ async def store_batch_of_log_events(
     log_request: LogRequest,
     background_tasks: BackgroundTasks,
     org: OrgApiKeyValidation = Depends(authenticate_org_key),
-) -> Optional[LogReply]:
+) -> LogReply | None:
     """Store the log_content in the logs database"""
 
     # Check if we are in maintenance mode
@@ -44,9 +44,9 @@ async def store_batch_of_log_events(
     await verify_propelauth_org_owns_project_id(org, log_request.project_id)
 
     # We return the valid log events
-    logged_events: List[Union[MinimalLogEventForMessages, LogError]] = []
-    logs_to_process: List[MinimalLogEventForMessages] = []
-    extra_logs_to_save: List[MinimalLogEventForMessages] = []
+    logged_events: list[MinimalLogEventForMessages | LogError] = []
+    logs_to_process: list[MinimalLogEventForMessages] = []
+    extra_logs_to_save: list[MinimalLogEventForMessages] = []
 
     usage_quota = await get_quota_for_org(org.org.org_id)
     current_usage = usage_quota.current_usage

@@ -1,7 +1,6 @@
 import hashlib
 import time
 import traceback
-from typing import List, Optional
 
 import httpx
 import stripe
@@ -61,7 +60,7 @@ async def bill_on_stripe(
         logger.error(f"Organization {org_id} has no stripe customer id")
 
 
-async def fetch_stripe_customer_id(org_id: str) -> Optional[str]:
+async def fetch_stripe_customer_id(org_id: str) -> str | None:
     """
     Fetch the Stripe customer id from the organization metadata
     """
@@ -80,7 +79,7 @@ class ExtractorClient:
     A client to interact with the extractor server
     """
 
-    temporal_client: Optional[Client] = None
+    temporal_client: Client | None = None
 
     def __init__(
         self,
@@ -145,7 +144,7 @@ class ExtractorClient:
         endpoint: str,  # Should be the name of the workflow
         data: dict,  # Should be just one pydantic model
         return_response: bool = False,
-    ) -> Optional[httpx.Response]:
+    ) -> httpx.Response | None:
         """
         Post data to the extractor temporal worker.
 
@@ -223,7 +222,7 @@ class ExtractorClient:
         return response
 
     async def run_process_tasks(
-        self, tasks_id_to_process: List[str], run_analytics: bool = False
+        self, tasks_id_to_process: list[str], run_analytics: bool = False
     ) -> None:
         """
         Run the task procesing pipeline on a task asynchronously.
@@ -247,8 +246,8 @@ class ExtractorClient:
 
     async def run_log_process_for_messages(
         self,
-        logs_to_process: List[MinimalLogEventForMessages],
-        extra_logs_to_save: Optional[List[MinimalLogEventForMessages]] = None,
+        logs_to_process: list[MinimalLogEventForMessages],
+        extra_logs_to_save: list[MinimalLogEventForMessages] | None = None,
     ):
         """
         Run the log procesing pipeline on *messages* asynchronously
@@ -273,8 +272,8 @@ class ExtractorClient:
 
     async def run_process_log_for_tasks(
         self,
-        logs_to_process: List[LogEvent],
-        extra_logs_to_save: Optional[List[LogEvent]] = None,
+        logs_to_process: list[LogEvent],
+        extra_logs_to_save: list[LogEvent] | None = None,
     ) -> None:
         """
         Run the log procesing pipeline on a task asynchronously.
@@ -347,7 +346,7 @@ class ExtractorClient:
 
     async def run_main_pipeline_on_messages(
         self,
-        messages: List[RoleContentMessage],
+        messages: list[RoleContentMessage],
     ) -> PipelineResults:
         """
         Run the log procesing pipeline on a list of messages asynchronously.
@@ -382,7 +381,7 @@ class ExtractorClient:
 
     async def run_recipe_on_tasks(
         self,
-        tasks_ids: List[str],
+        tasks_ids: list[str],
         recipe: Recipe,
     ):
         if len(tasks_ids) == 0:
@@ -403,9 +402,9 @@ class ExtractorClient:
     async def collect_langsmith_data(
         self,
         current_usage: int,
-        langsmith_api_key: Optional[str] = None,
-        langsmith_project_name: Optional[str] = None,
-        max_usage: Optional[int] = None,
+        langsmith_api_key: str | None = None,
+        langsmith_project_name: str | None = None,
+        max_usage: int | None = None,
     ):
         await self._post(
             "extract_langsmith_data_workflow",
@@ -420,9 +419,9 @@ class ExtractorClient:
     async def collect_langfuse_data(
         self,
         current_usage: int,
-        langfuse_secret_key: Optional[str] = None,
-        langfuse_public_key: Optional[str] = None,
-        max_usage: Optional[int] = None,
+        langfuse_secret_key: str | None = None,
+        langfuse_public_key: str | None = None,
+        max_usage: int | None = None,
     ):
         await self._post(
             "extract_langfuse_data_workflow",

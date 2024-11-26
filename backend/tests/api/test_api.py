@@ -4,7 +4,6 @@ from phospho_backend.main import app as router
 from phospho_backend.utils import generate_uuid
 from fastapi.testclient import TestClient
 import pymongo
-from typing import Dict, List
 
 assert config.ENVIRONMENT != "production"
 
@@ -12,7 +11,7 @@ assert config.ENVIRONMENT != "production"
 # We redefine cleanup here to be able to run tests locally
 def cleanup(
     mongo_db: pymongo.MongoClient,
-    collections_to_cleanup: Dict[str, List[str]],
+    collections_to_cleanup: dict[str, list[str]],
 ) -> None:
     """
     DELETE the documents in the collections specified in the collections_to_cleanup dict

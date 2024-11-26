@@ -1,4 +1,3 @@
-from typing import Dict, List, Optional
 from pydantic import BaseModel
 from phospho_backend.db.models import EventDefinition
 from phospho_backend.services.integrations.opentelemetry import StandardSpanModel
@@ -6,8 +5,8 @@ from phospho_backend.services.integrations.opentelemetry import StandardSpanMode
 
 class AddEventRequest(BaseModel):
     event: EventDefinition
-    score_range_value: Optional[float] = None
-    score_category_label: Optional[str] = None
+    score_range_value: float | None = None
+    score_category_label: str | None = None
 
 
 class RemoveEventRequest(BaseModel):
@@ -22,4 +21,4 @@ class FetchSpansRequest(BaseModel):
 class TaskSpans(BaseModel):
     task_id: str
     project_id: str
-    spans: List[StandardSpanModel]
+    spans: list[StandardSpanModel]

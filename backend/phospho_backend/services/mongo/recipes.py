@@ -1,4 +1,4 @@
-from typing import Optional, List, Literal
+from typing import Literal
 from phospho_backend.api.platform.models.explore import Pagination
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.services.mongo.events import get_event_definition_from_event_id
@@ -80,8 +80,8 @@ async def run_recipe_on_tasks_batched(
     project_id: str,
     recipe: Recipe,
     org_id: str,
-    sample_rate: Optional[float] = None,
-    filters: Optional[ProjectDataFilters] = None,
+    sample_rate: float | None = None,
+    filters: ProjectDataFilters | None = None,
     batch_size: int = 16,
 ) -> None:
     """
@@ -129,9 +129,9 @@ async def run_recipe_on_tasks_batched(
 
 async def run_recipe_types_on_tasks(
     project_id: str,
-    recipe_types: List[Literal["event_detection", "sentiment_language"]],
+    recipe_types: list[Literal["event_detection", "sentiment_language"]],
     org_id: str,
-    filters: Optional[ProjectDataFilters],
+    filters: ProjectDataFilters | None,
 ) -> None:
     """
     Run multiple recipes of different types on tasks of a project

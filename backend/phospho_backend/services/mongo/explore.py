@@ -4,9 +4,8 @@ Explore metrics service
 
 import datetime
 import math
-import numpy as np
 from collections import defaultdict
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union, cast
+from typing import Any, Literal, cast
 
 import pandas as pd  # type: ignore
 import pydantic
@@ -84,13 +83,13 @@ async def project_has_enough_labelled_tasks(project_id: str, enough: int = 1) ->
 
 async def deprecated_get_dashboard_aggregated_metrics(
     project_id: str,
-    index: List[Literal["days", "minutes"]],
-    columns: List[Literal["event_name", "flag"]],
-    count_of: Optional[Literal["tasks", "events"]] = "tasks",
-    timerange: Optional[Literal["last_7_days", "last_30_minutes"]] = "last_7_days",
-    filters: Optional[ProjectDataFilters] = None,
-    limit: Optional[int] = None,
-) -> List[Dict[str, object]]:
+    index: list[Literal["days", "minutes"]],
+    columns: list[Literal["event_name", "flag"]],
+    count_of: Literal["tasks", "events"] | None = "tasks",
+    timerange: Literal["last_7_days", "last_30_minutes"] | None = "last_7_days",
+    filters: ProjectDataFilters | None = None,
+    limit: int | None = None,
+) -> list[dict[str, object]]:
     """
     Get aggregated metrics for a project. Used for dashboard.
 
@@ -102,7 +101,7 @@ async def deprecated_get_dashboard_aggregated_metrics(
     timerange_end = None
 
     if timerange == "last_7_days":
-        timerange_end_datetime = datetime.datetime.now(datetime.timezone.utc)
+        timerange_end_datetime = datetime.datetime.now(datetime.UTC)
         timerange_end = int(timerange_end_datetime.timestamp())
         timerange_start_datetime = timerange_end_datetime - datetime.timedelta(days=6)
         # Round to the beginning of the day
@@ -167,9 +166,9 @@ async def deprecated_get_dashboard_aggregated_metrics(
     if timerange is not None:
         # Convert the timerange to datetime, assuming timestamp stored in UTC
         if timerange_start is not None:
-            ts = datetime.datetime.fromtimestamp(timerange_start, datetime.timezone.utc)
+            ts = datetime.datetime.fromtimestamp(timerange_start, datetime.UTC)
         if timerange_end is not None:
-            te = datetime.datetime.fromtimestamp(timerange_end, datetime.timezone.utc)
+            te = datetime.datetime.fromtimestamp(timerange_end, datetime.UTC)
 
     if timerange == "last_7_days" and "days" in index:
         complete_date_range = pd.date_range(ts, te, freq="D")
@@ -201,15 +200,15 @@ async def deprecated_get_dashboard_aggregated_metrics(
         df_dict = df.to_dict(orient="records")
     else:
         df_dict = []
-    return cast(List[Dict[str, object]], df_dict)
+    return cast(list[dict[str, object]], df_dict)
 
 
 async def get_success_rate_per_task_position(
     project_id,
     filters: ProjectDataFilters,
-    quantile_filter: Optional[float] = None,
+    quantile_filter: float | None = None,
     **kwargs,
-) -> Optional[List[Dict[str, object]]]:
+) -> list[dict[str, object]] | None:
     """
     Compute the success rate per message position. Used for the Tasks and the Sessions dashboard.
     We only keep the 90% percentile of the messages length to avoid outliers with very long sessions.
@@ -311,14 +310,14 @@ async def get_success_rate_per_task_position(
     success_rate_per_message_position_dict = success_rate_per_message_position[
         ["task_position", "success_rate"]
     ].to_dict(orient="records")
-    return cast(List[Dict[str, object]], success_rate_per_message_position_dict)
+    return cast(list[dict[str, object]], success_rate_per_message_position_dict)
 
 
 async def get_total_success_rate(
     project_id: str,
     filters: ProjectDataFilters,
     **kwargs,
-) -> Optional[float]:
+) -> float | None:
     """
     Get the total success rate of a project. This is the ratio of successful tasks over
     the total number of tasks.
@@ -357,21 +356,21 @@ async def get_total_success_rate(
 
 async def get_most_detected_tagger_name(
     project_id: str,
-    flag: Optional[Literal["success", "failure"]] = None,
-    event_name: Optional[Union[str, List[str]]] = None,
-    created_at_start: Optional[int] = None,
-    created_at_end: Optional[int] = None,
-    sentiment: Optional[str] = None,
-    last_eval_source: Optional[str] = None,
-    language: Optional[str] = None,
-    metadata: Optional[Dict[str, object]] = None,
+    flag: Literal["success", "failure"] | None = None,
+    event_name: str | list[str] | None = None,
+    created_at_start: int | None = None,
+    created_at_end: int | None = None,
+    sentiment: str | None = None,
+    last_eval_source: str | None = None,
+    language: str | None = None,
+    metadata: dict[str, object] | None = None,
     **kwargs,
-) -> Optional[str]:
+) -> str | None:
     """
     Get the most detected tagger name for a project.
     """
     mongo_db = await get_mongo_db()
-    main_filter: Dict[str, object] = {
+    main_filter: dict[str, object] = {
         "project_id": project_id,
         "removed": {"$ne": True},
         "event_definition.score_range_settings.score_type": "confidence",
@@ -389,12 +388,12 @@ async def get_most_detected_tagger_name(
         }
     # Event is not removed
     main_filter["removed"] = {"$ne": True}
-    pipeline: List[Dict[str, object]] = [
+    pipeline: list[dict[str, object]] = [
         {"$match": main_filter},
     ]
 
     # Tasks filter
-    tasks_filter: Dict[str, object] = {}
+    tasks_filter: dict[str, object] = {}
     # Filter on flag
     if flag is not None:
         tasks_filter["tasks.flag"] = flag
@@ -450,7 +449,7 @@ async def get_most_detected_tagger_name(
 
 def extract_date_range(
     filters: ProjectDataFilters,
-) -> Tuple[Optional[datetime.datetime], Optional[datetime.datetime]]:
+) -> tuple[datetime.datetime | None, datetime.datetime | None]:
     start_date = end_date = None
     if filters.created_at_start and isinstance(filters.created_at_start, int):
         start_date = datetime.datetime.fromtimestamp(filters.created_at_start)
@@ -469,7 +468,7 @@ def extract_date_range(
 
 def generate_date_range(
     start_date: datetime.datetime, end_date: datetime.datetime, time_dimension: str
-) -> List[str]:
+) -> list[str]:
     date_list = []
     current_date = start_date
 
@@ -496,7 +495,7 @@ async def get_nb_of_daily_tasks(
     project_id: str,
     filters: ProjectDataFilters,
     **kwargs,
-) -> List[dict]:
+) -> list[dict]:
     """
     Get the number of daily tasks of a project.
     """
@@ -578,13 +577,13 @@ async def get_top_taggers_names_and_count(
     filters: ProjectDataFilters,
     limit: int = 3,
     **kwargs,
-) -> List[Dict[str, object]]:
+) -> list[dict[str, object]]:
     """
     Get the top taggers analytics names and count of a project.
     """
     mongo_db = await get_mongo_db()
 
-    main_filter: Dict[str, object] = {
+    main_filter: dict[str, object] = {
         "project_id": project_id,
         "removed": {"$ne": True},
         "event_definition.score_range_settings.score_type": "confidence",
@@ -601,7 +600,7 @@ async def get_top_taggers_names_and_count(
         }
 
     # Either the removed filed doesn't exist, either it's not True
-    pipeline: List[Dict[str, object]] = [
+    pipeline: list[dict[str, object]] = [
         {"$match": main_filter},
         {
             "$lookup": {
@@ -646,9 +645,9 @@ async def get_top_taggers_names_and_count(
 
 async def get_tasks_aggregated_metrics(
     project_id: str,
-    metrics: Optional[List[str]] = None,
-    filters: Optional[ProjectDataFilters] = None,
-) -> Dict[str, object]:
+    metrics: list[str] | None = None,
+    filters: ProjectDataFilters | None = None,
+) -> dict[str, object]:
     """
     Compute aggregated metrics for the tasks of a project. Used for the Tasks dashboard.
     """
@@ -670,14 +669,14 @@ async def get_tasks_aggregated_metrics(
             "last_clustering_composition",
         ]
 
-    today_datetime = datetime.datetime.now(datetime.timezone.utc)
+    today_datetime = datetime.datetime.now(datetime.UTC)
     seven_days_ago_datetime = today_datetime - datetime.timedelta(days=6)
     # Round to the beginning of the day
     seven_days_ago_datetime = seven_days_ago_datetime.replace(
         hour=0, minute=0, second=0, microsecond=0
     )
 
-    output: Dict[str, object] = {}
+    output: dict[str, object] = {}
 
     if "total_nb_tasks" in metrics:
         output["total_nb_tasks"] = await get_total_nb_of_tasks(
@@ -728,7 +727,7 @@ async def get_daily_success_rate(
     project_id: str,
     filters: ProjectDataFilters,
     **kwargs,
-) -> List[dict]:
+) -> list[dict]:
     """
     Get the daily success rate of a project.
     """
@@ -795,8 +794,8 @@ async def get_daily_success_rate(
 
 async def get_total_nb_of_sessions(
     project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
-) -> Optional[int]:
+    filters: ProjectDataFilters | None = None,
+) -> int | None:
     """
     Get the total number of sessions of a project.
     """
@@ -825,10 +824,10 @@ async def get_total_nb_of_sessions(
 
 async def get_nb_tasks_in_sessions(
     project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
-    limit: Optional[int] = None,
-    sorted: Optional[bool] = False,
-) -> Optional[int]:
+    filters: ProjectDataFilters | None = None,
+    limit: int | None = None,
+    sorted: bool | None = False,
+) -> int | None:
     """
     Get the total number of tasks in a set of sessions of a project.
     """
@@ -876,8 +875,8 @@ async def get_nb_tasks_in_sessions(
 
 async def get_global_average_session_length(
     project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
-) -> Optional[float]:
+    filters: ProjectDataFilters | None = None,
+) -> float | None:
     """
     Get the global average session length of a project.
     """
@@ -916,8 +915,8 @@ async def get_global_average_session_length(
 
 async def get_last_message_success_rate(
     project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
-) -> Optional[float]:
+    filters: ProjectDataFilters | None = None,
+) -> float | None:
     """
     Get the success rate of the last message of a project.
     """
@@ -986,7 +985,7 @@ async def get_last_message_success_rate(
 async def get_nb_sessions_per_day(
     project_id: str,
     filters: ProjectDataFilters,
-) -> List[dict]:
+) -> list[dict]:
     """
     Get the nb of sessions per day of a project.
     """
@@ -1045,7 +1044,7 @@ async def get_nb_sessions_per_day(
 
 async def get_nb_sessions_histogram(
     project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
+    filters: ProjectDataFilters | None = None,
 ):
     """
     Get the number of sessions per session length
@@ -1106,11 +1105,11 @@ async def get_nb_sessions_histogram(
 
 async def get_sessions_aggregated_metrics(
     project_id: str,
-    quantile_filter: Optional[float] = None,
-    metrics: Optional[List[str]] = None,
-    filters: Optional[ProjectDataFilters] = None,
-    limit: Optional[int] = None,
-) -> Dict[str, object]:
+    quantile_filter: float | None = None,
+    metrics: list[str] | None = None,
+    filters: ProjectDataFilters | None = None,
+    limit: int | None = None,
+) -> dict[str, object]:
     """
     Compute aggregated metrics for the sessions of a project. Used for the Sessions dashboard.
     """
@@ -1132,14 +1131,14 @@ async def get_sessions_aggregated_metrics(
             "nb_tasks_in_sessions",
         ]
 
-    today_datetime = datetime.datetime.now(datetime.timezone.utc)
+    today_datetime = datetime.datetime.now(datetime.UTC)
     seven_days_ago_datetime = today_datetime - datetime.timedelta(days=6)
     # Round to the beginning of the day
     seven_days_ago_datetime = seven_days_ago_datetime.replace(
         hour=0, minute=0, second=0, microsecond=0
     )
 
-    output: Dict[str, object] = {}
+    output: dict[str, object] = {}
 
     if "total_nb_sessions" in metrics:
         output["total_nb_sessions"] = await get_total_nb_of_sessions(
@@ -1180,7 +1179,7 @@ async def get_sessions_aggregated_metrics(
     return output
 
 
-async def create_ab_tests_table(project_id: str, limit: int = 1000) -> List[ABTest]:
+async def create_ab_tests_table(project_id: str, limit: int = 1000) -> list[ABTest]:
     """
     Compute the AB tests of a project. Used for the AB Tests dashboard.
     """
@@ -1277,13 +1276,13 @@ async def create_ab_tests_table(project_id: str, limit: int = 1000) -> List[ABTe
 
 async def get_success_rate_by_event_name(
     project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
-) -> Dict[str, float]:
+    filters: ProjectDataFilters | None = None,
+) -> dict[str, float]:
     """
     Get the success rate by event name of a project.
     """
     mongo_db = await get_mongo_db()
-    main_filter: Dict[str, object] = {
+    main_filter: dict[str, object] = {
         "project_id": project_id,
         "removed": {"$ne": True},
     }
@@ -1298,7 +1297,7 @@ async def get_success_rate_by_event_name(
             "$lte": filters.created_at_end,
         }
 
-    pipeline: List[Dict[str, object]] = [
+    pipeline: list[dict[str, object]] = [
         {"$match": main_filter},
         {
             "$lookup": {
@@ -1354,7 +1353,7 @@ async def get_total_nb_of_detections(
     job_results collection.
     """
     mongo_db = await get_mongo_db()
-    main_filter: Dict[str, object] = {"project_id": project_id}
+    main_filter: dict[str, object] = {"project_id": project_id}
     # Time range filter
     if filters.created_at_start is not None:
         main_filter["created_at"] = {"$gte": filters.created_at_start}
@@ -1362,7 +1361,7 @@ async def get_total_nb_of_detections(
         main_filter["created_at"] = {"$lte": filters.created_at_end}
     if filters.event_id is not None:
         main_filter["job_metadata.id"] = {"$in": filters.event_id}
-    pipeline: List[Dict[str, object]] = [
+    pipeline: list[dict[str, object]] = [
         {"$match": main_filter},
         {"$count": "nb_detections"},
     ]
@@ -1378,12 +1377,12 @@ async def get_y_pred_y_true(
     project_id: str,
     filters: ProjectDataFilters,
     **kwargs,
-) -> Tuple[Optional[pd.Series], Optional[pd.Series]]:
+) -> tuple[pd.Series | None, pd.Series | None]:
     """
     Get the y_pred for an event.
     """
     mongo_db = await get_mongo_db()
-    main_filter: Dict[str, object] = {"project_id": project_id}
+    main_filter: dict[str, object] = {"project_id": project_id}
     # Time range filter
     if filters.created_at_start is not None:
         main_filter["created_at"] = {"$gte": filters.created_at_start}
@@ -1514,7 +1513,7 @@ async def get_y_pred_y_true(
 async def get_category_distribution(
     project_id: str,
     filters: ProjectDataFilters,
-) -> Dict[str, List[Dict[str, Any]]]:
+) -> dict[str, list[dict[str, Any]]]:
     """
     Filter the events to keep only the ones that are category events.
 
@@ -1522,7 +1521,7 @@ async def get_category_distribution(
     """
     db = await get_mongo_db()
 
-    main_filter: Dict[str, object] = {
+    main_filter: dict[str, object] = {
         "project_id": project_id,
         "removed": {"$ne": True},
         # "event_definition.event_name": {"$in": filters.event_name},
@@ -1568,7 +1567,7 @@ async def get_category_distribution(
         return {}
 
     # Format the results : {event_name: [{category, count}]}
-    output: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    output: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for item in result:
         event_name = item["event_name"]
         category = item["category"]
@@ -1580,16 +1579,16 @@ async def get_category_distribution(
 
 async def get_events_aggregated_metrics(
     project_id: str,
-    metrics: Optional[List[str]] = None,
-    filters: Optional[ProjectDataFilters] = None,
-) -> Dict[str, object]:
+    metrics: list[str] | None = None,
+    filters: ProjectDataFilters | None = None,
+) -> dict[str, object]:
     if filters is None:
         filters = ProjectDataFilters()
     if metrics is None:
         metrics = [
             "success_rate_by_event_name",
         ]
-    output: Dict[str, object] = {}
+    output: dict[str, object] = {}
     if "success_rate_by_event_name" in metrics:
         output["success_rate_by_event_name"] = await get_success_rate_by_event_name(
             project_id=project_id, filters=filters
@@ -1713,10 +1712,8 @@ async def graph_number_of_daily_tasks(project_id: str):
     result_df = pd.DataFrame(result)
     # Add missing days to the result, and set the missing values to 0
     complete_date_range = pd.date_range(
-        datetime.datetime.fromtimestamp(
-            seven_days_ago_timestamp, datetime.timezone.utc
-        ),
-        datetime.datetime.fromtimestamp(today_timestamp, datetime.timezone.utc),
+        datetime.datetime.fromtimestamp(seven_days_ago_timestamp, datetime.UTC),
+        datetime.datetime.fromtimestamp(today_timestamp, datetime.UTC),
         freq="D",
     )
     complete_df = pd.DataFrame({"date": complete_date_range})
@@ -1824,10 +1821,8 @@ async def get_events_per_day(project_id: str):
 
     # Add missing days to the result, and set the missing values to 0
     complete_date_range = pd.date_range(
-        datetime.datetime.fromtimestamp(
-            seven_days_ago_timestamp, datetime.timezone.utc
-        ),
-        datetime.datetime.fromtimestamp(today_timestamp, datetime.timezone.utc),
+        datetime.datetime.fromtimestamp(seven_days_ago_timestamp, datetime.UTC),
+        datetime.datetime.fromtimestamp(today_timestamp, datetime.UTC),
         freq="D",
     )
     complete_df = pd.DataFrame({"date": complete_date_range})
@@ -1850,13 +1845,13 @@ async def get_events_per_day(project_id: str):
 
 async def get_dashboard_aggregated_metrics(
     project_id: str,
-    metrics: Optional[List[str]] = None,
+    metrics: list[str] | None = None,
 ):
     if metrics is None:
         metrics = [
             "number_of_daily_tasks",
         ]
-    output: Dict[str, object] = {}
+    output: dict[str, object] = {}
     if "number_of_daily_tasks" in metrics:
         output["number_of_daily_tasks"] = await graph_number_of_daily_tasks(
             project_id=project_id,
@@ -1869,12 +1864,12 @@ async def get_dashboard_aggregated_metrics(
 
 async def get_ab_tests_versions(
     project_id: str,
-    versionA: Optional[str],
-    versionB: Optional[str],
-    selected_events_ids: Optional[List[str]] = None,
-    filtersA: Optional[ProjectDataFilters] = None,
-    filtersB: Optional[ProjectDataFilters] = None,
-) -> List[Dict[str, Union[str, float, int]]]:
+    versionA: str | None,
+    versionB: str | None,
+    selected_events_ids: list[str] | None = None,
+    filtersA: ProjectDataFilters | None = None,
+    filtersB: ProjectDataFilters | None = None,
+) -> list[dict[str, str | float | int]]:
     """
     - For boolean events, gets the number of times the event was detected in each task with the two versions of the model.
     - For categorical events, gets the number of times each category was detected in each task with the two versions of the model.
@@ -1958,13 +1953,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][event_result["version_id"]] = (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] = event_result["count"]
                     else:
-                        graph_values[event_name][event_result["version_id"]] += (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] += event_result["count"]
 
             # We normalize the count by the total number of tasks with each version to get the percentage
             if versionA in graph_values.get(event_name, []):
@@ -1985,13 +1980,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][event_result["version_id"]] = (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] = event_result["count"]
                     else:
-                        graph_values[event_name][event_result["version_id"]] += (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] += event_result["count"]
                 # We normalize the count by the total number of tasks with each version
                 if event_result["version_id"] == versionA:
                     graph_values[event_name][versionA] = graph_values[event_name][
@@ -2024,13 +2019,13 @@ async def get_ab_tests_versions(
                         )
 
                 if event_result["version_id"] not in divide_for_correct_average:
-                    divide_for_correct_average[event_result["version_id"]] = (
-                        event_result["count"]
-                    )
+                    divide_for_correct_average[
+                        event_result["version_id"]
+                    ] = event_result["count"]
                 else:
-                    divide_for_correct_average[event_result["version_id"]] += (
-                        event_result["count"]
-                    )
+                    divide_for_correct_average[
+                        event_result["version_id"]
+                    ] += event_result["count"]
 
             for version in divide_for_correct_average:
                 graph_values_range[event_name][version] = (
@@ -2084,8 +2079,8 @@ async def get_ab_tests_versions(
 
 async def get_nb_tasks_version(
     project_id: str,
-    version: Optional[str] = None,
-    filters: Optional[ProjectDataFilters] = None,
+    version: str | None = None,
+    filters: ProjectDataFilters | None = None,
 ) -> int:
     """
     Get the number of tasks with the version_id in the filters.
@@ -2095,7 +2090,7 @@ async def get_nb_tasks_version(
     mongo_db = await get_mongo_db()
 
     if filters is not None:
-        main_filter: Dict[str, object] = {
+        main_filter: dict[str, object] = {
             "project_id": project_id,
         }
         if filters.created_at_start is not None:
@@ -2133,10 +2128,10 @@ async def get_nb_tasks_version(
 
 async def get_number_of_events_version(
     project_id: str,
-    version: Optional[str] = None,
-    filters: Optional[ProjectDataFilters] = None,
-    selected_events_ids: Optional[List[str]] = None,
-) -> List:
+    version: str | None = None,
+    filters: ProjectDataFilters | None = None,
+    selected_events_ids: list[str] | None = None,
+) -> list:
     if filters is None:
         filters = ProjectDataFilters()
 

@@ -1,5 +1,5 @@
 import datetime
-from typing import Dict, List, Literal, Optional
+from typing import Literal
 
 from phospho_backend.db.mongo import get_mongo_db
 
@@ -12,8 +12,8 @@ class QueryBuilder:
     Class to build common MongoDB queries
     """
 
-    project_id: Optional[str] = None
-    pipeline: List[Dict[str, object]]
+    project_id: str | None = None
+    pipeline: list[dict[str, object]]
     fetch_object: Literal[
         "tasks",
         "sessions",
@@ -36,8 +36,8 @@ class QueryBuilder:
             "sessions_with_events",
             "sessions_with_tasks",
         ],
-        project_id: Optional[str] = None,
-        filters: Optional[ProjectDataFilters] = None,
+        project_id: str | None = None,
+        filters: ProjectDataFilters | None = None,
     ):
         """
         Create a new QueryBuilder instance.
@@ -138,7 +138,7 @@ class QueryBuilder:
 
     def _main_doc_filter(
         self, prefix: str = "", created_at="created_at"
-    ) -> Dict[str, object]:
+    ) -> dict[str, object]:
         """
         Implements:
         - project_id
@@ -150,7 +150,7 @@ class QueryBuilder:
 
         filters = self.filters
 
-        match: Dict[str, object] = {}
+        match: dict[str, object] = {}
 
         # if there is no match project_id in the pipeline
         if self.project_id and not any(
@@ -175,7 +175,7 @@ class QueryBuilder:
 
         return match
 
-    def main_doc_filter_tasks(self, prefix: str = "") -> Dict[str, object]:
+    def main_doc_filter_tasks(self, prefix: str = "") -> dict[str, object]:
         """
         Implements:
         - project_id
@@ -194,7 +194,7 @@ class QueryBuilder:
         - excluded_users
         """
         filters = self.filters
-        match: Dict[str, object] = self._main_doc_filter(prefix=prefix)
+        match: dict[str, object] = self._main_doc_filter(prefix=prefix)
 
         # if (
         #     self.fetch_object == "tasks"
@@ -267,7 +267,7 @@ class QueryBuilder:
 
         return match
 
-    def main_doc_filter_sessions(self, prefix: str = "") -> Dict[str, object]:
+    def main_doc_filter_sessions(self, prefix: str = "") -> dict[str, object]:
         """
         Implements:
         - project_id
@@ -283,7 +283,7 @@ class QueryBuilder:
         - has_notes
         """
         filters = self.filters
-        match: Dict[str, object] = self._main_doc_filter(
+        match: dict[str, object] = self._main_doc_filter(
             prefix=prefix,
             # Filter on the last message timestamp for sessions
             created_at="last_message_ts",
@@ -332,7 +332,7 @@ class QueryBuilder:
 
         return match
 
-    async def task_complex_filters(self, prefix: str = "") -> Dict[str, object]:
+    async def task_complex_filters(self, prefix: str = "") -> dict[str, object]:
         """
         More complex filters for tasks that require fetching data from the database
         or intermediate pipeline stages. This mutates the pipeline.
@@ -347,7 +347,7 @@ class QueryBuilder:
         """
 
         filters = self.filters
-        match: Dict[str, object] = {}
+        match: dict[str, object] = {}
 
         if filters.event_name is not None:
             self.merge_events(foreignField="task_id")
@@ -454,7 +454,7 @@ class QueryBuilder:
 
         return match
 
-    async def session_complex_filters(self) -> Dict[str, object]:
+    async def session_complex_filters(self) -> dict[str, object]:
         """
         More complex filters for sessions that require fetching data from the database
         or intermediate pipeline stages. This mutates the pipeline.
@@ -474,7 +474,7 @@ class QueryBuilder:
 
         filters = self.filters
 
-        match: Dict[str, object] = {}
+        match: dict[str, object] = {}
 
         if filters.event_name is not None:
             self.merge_events(foreignField="session_id")
@@ -727,7 +727,7 @@ class QueryBuilder:
             }
         ]
 
-    async def build(self, keep_removed_events: bool = False) -> List[Dict[str, object]]:
+    async def build(self, keep_removed_events: bool = False) -> list[dict[str, object]]:
         """
         Build the pipeline for the query.
         Edits in-place the pipeline attribute of the class.

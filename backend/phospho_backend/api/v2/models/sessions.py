@@ -1,19 +1,18 @@
-from typing import List, Optional
 from pydantic import BaseModel
 from phospho_backend.db.models import Session
 
 
 class Sessions(BaseModel):
-    sessions: List[Session]
+    sessions: list[Session]
 
 
 class SessionCreationRequest(BaseModel):
     project_id: str
-    data: Optional[dict] = None
+    data: dict | None = None
 
 
 class SessionUpdateRequest(BaseModel):
-    metadata: Optional[dict] = None
-    data: Optional[dict] = None
-    preview: Optional[str] = None
-    notes: Optional[str] = None
+    metadata: dict | None = None
+    data: dict | None = None
+    preview: str | None = None
+    notes: str | None = None

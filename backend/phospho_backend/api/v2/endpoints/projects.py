@@ -1,5 +1,3 @@
-from typing import Optional
-
 from fastapi import APIRouter, Depends
 
 from phospho_backend.api.v2.models import (
@@ -46,7 +44,7 @@ async def get_sessions(
 )
 async def post_tasks(
     project_id: str,
-    query: Optional[QuerySessionsTasksRequest] = None,
+    query: QuerySessionsTasksRequest | None = None,
     org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ) -> Tasks:
     """

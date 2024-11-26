@@ -1,24 +1,23 @@
-from typing import Optional
 from pydantic import BaseModel
 
 
 class OpenAIDatasetFormat(BaseModel):
-    content: Optional[str]
-    role: Optional[str]
-    created_at: Optional[str]
-    conversation_id: Optional[str]
-    user_id: Optional[str]
+    content: str | None
+    role: str | None
+    created_at: str | None
+    conversation_id: str | None
+    user_id: str | None
 
 
 class PhosphoDatasetFormat(BaseModel):
-    input: Optional[str]
-    output: Optional[str]
-    created_at: Optional[str]
-    task_id: Optional[str]
-    session_id: Optional[str]
-    user_id: Optional[str]
+    input: str | None
+    output: str | None
+    created_at: str | None
+    task_id: str | None
+    session_id: str | None
+    user_id: str | None
 
 
 class UserAssistant(BaseModel):
-    user: Optional[str]
-    assistant: Optional[str]
+    user: str | None
+    assistant: str | None

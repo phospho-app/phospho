@@ -1,5 +1,4 @@
 import datetime
-from typing import List, Optional
 
 from phospho_backend.api.platform.models.projects import EmailUsersQuery
 import pandas as pd  # type: ignore
@@ -132,7 +131,7 @@ async def post_update_project(
 )
 async def post_sessions(
     project_id: str,
-    query: Optional[QuerySessionsTasksRequest] = None,
+    query: QuerySessionsTasksRequest | None = None,
     user: User = Depends(propelauth.require_user),
 ) -> Sessions:
     project = await get_project_by_id(project_id)
@@ -187,12 +186,12 @@ async def get_events(
 @router.get(
     "/projects/{project_id}/languages",
     description="Get the list of all unique languages detected in a project.",
-    response_model=List[str],
+    response_model=list[str],
 )
 async def get_languages(
     project_id: str,
     user: User = Depends(propelauth.require_user),
-) -> List[str]:
+) -> list[str]:
     """
     Get the list of all unique languages detected in a project.
     """
@@ -209,7 +208,7 @@ async def get_languages(
 )
 async def post_tasks(
     project_id: str,
-    query: Optional[QuerySessionsTasksRequest] = None,
+    query: QuerySessionsTasksRequest | None = None,
     user: User = Depends(propelauth.require_user),
 ):
     project = await get_project_by_id(project_id)
@@ -369,7 +368,7 @@ async def get_users(
 )
 async def get_project_unique_events(
     project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
+    filters: ProjectDataFilters | None = None,
     user: User = Depends(propelauth.require_user),
 ) -> Events:
     """

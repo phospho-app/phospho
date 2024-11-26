@@ -1,4 +1,4 @@
-from typing import Dict, List, Literal
+from typing import Literal
 
 from phospho_backend.api.platform.models.metadata import MetadataPivotQuery
 from phospho_backend.core import constants
@@ -10,8 +10,8 @@ from loguru import logger
 
 async def _build_unique_metadata_fields_pipeline(
     project_id: str, type: Literal["number", "string"] = "number"
-) -> List[Dict[str, object]]:
-    pipeline: List[Dict[str, object]] = [
+) -> list[dict[str, object]]:
+    pipeline: list[dict[str, object]] = [
         {
             "$match": {
                 "project_id": project_id,
@@ -51,7 +51,7 @@ async def _build_unique_metadata_fields_pipeline(
 async def collect_unique_metadata_fields(
     project_id: str,
     type: Literal["number", "string"] = "number",
-) -> List[str]:
+) -> list[str]:
     """
     Get the unique metadata keys for a project
     """
@@ -80,7 +80,7 @@ async def collect_unique_metadata_fields(
 
 async def collect_unique_metadata_field_values(
     project_id: str, type: Literal["number", "string"] = "string"
-) -> Dict[str, List[str]]:
+) -> dict[str, list[str]]:
     """
     Get the unique metadata values for all the metadata fields of a certain
     type in a project.
@@ -182,7 +182,7 @@ async def breakdown_by_sum_of_metadata_field(
     )
     pipeline = await query_builder.build()
 
-    def _merge_sessions(pipeline: List[Dict[str, object]]) -> None:
+    def _merge_sessions(pipeline: list[dict[str, object]]) -> None:
         # if already merged, return the pipeline
         if any(
             operator.get("$lookup", {}).get("from") == "sessions"  # type: ignore
@@ -215,7 +215,7 @@ async def breakdown_by_sum_of_metadata_field(
             },
         ]
 
-    def _unwind_events(pipeline: List[Dict[str, object]]) -> None:
+    def _unwind_events(pipeline: list[dict[str, object]]) -> None:
         # Unwind the events array if not already done
         if any(operator.get("$unwind") == "$events" for operator in pipeline):
             return

@@ -1,4 +1,3 @@
-from typing import List, Optional
 from pydantic import BaseModel, Field
 
 from phospho_backend.db.models import (
@@ -8,18 +7,18 @@ from phospho_backend.db.models import (
 
 
 class Projects(BaseModel):
-    projects: List[Project]
+    projects: list[Project]
 
 
 class ProjectCreationRequest(BaseModel):
     project_name: str
-    settings: Optional[dict] = None
+    settings: dict | None = None
 
 
 class ProjectUpdateRequest(BaseModel):
-    project_name: Optional[str] = None
+    project_name: str | None = None
     # org_id: Optional[str] = None
-    settings: Optional[dict] = None
+    settings: dict | None = None
 
 
 class UserEventMetadata(BaseModel):
@@ -35,19 +34,19 @@ class UserMetadata(BaseModel):
 
     user_id: str
     nb_tasks: int
-    avg_success_rate: Optional[float] = None
-    avg_session_length: Optional[float] = None
-    total_tokens: Optional[int] = None
-    events: Optional[List[UserEventMetadata]] = Field(
-        default_factory=List[UserEventMetadata]
+    avg_success_rate: float | None = None
+    avg_session_length: float | None = None
+    total_tokens: int | None = None
+    events: list[UserEventMetadata] | None = Field(
+        default_factory=list[UserEventMetadata]
     )
-    tasks_id: Optional[List[str]] = Field(default_factory=List[str])
+    tasks_id: list[str] | None = Field(default_factory=list[str])
     first_message_ts: float
     last_message_ts: float
 
 
 class Users(BaseModel):
-    users: List[UserMetadata]
+    users: list[UserMetadata]
 
 
 class FlattenedTasksRequest(BaseModel):
@@ -58,10 +57,10 @@ class FlattenedTasksRequest(BaseModel):
 
 
 class ComputeJobsRequest(BaseModel):
-    job_ids: List[str]
+    job_ids: list[str]
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
 
 
 class QuerySessionsTasksRequest(BaseModel):
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
-    limit: Optional[int] = 1000
+    limit: int | None = 1000

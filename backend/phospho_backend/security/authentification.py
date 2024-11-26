@@ -4,8 +4,6 @@ Handle all authentification related tasks.
 We now use Propelauth for authentification.
 """
 
-from typing import Optional
-
 from fastapi import Depends, HTTPException, Request
 from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.security.utils import get_authorization_scheme_param
@@ -88,9 +86,7 @@ def authenticate_org_key_in_alpha(
     return org
 
 
-def authenticate_org_key_no_exception(
-    request: Request
-) -> Optional[OrgApiKeyValidation]:
+def authenticate_org_key_no_exception(request: Request) -> OrgApiKeyValidation | None:
     """
     API key authentification for orgs. Does NOT raise an exception if the token is invalid.
     """

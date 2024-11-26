@@ -1,4 +1,3 @@
-from typing import Dict, List, Optional
 from loguru import logger
 from pydantic import BaseModel
 
@@ -14,9 +13,9 @@ class StandardSpanModel(BaseModel):
     project_id: str
     task_id: str
     session_id: str
-    metadata: Optional[dict] = None
+    metadata: dict | None = None
     #
-    propagate: Optional[bool] = None
+    propagate: bool | None = None
     #
     start_time_unix_nano: int
     end_time_unix_nano: int
@@ -109,7 +108,7 @@ class OpenTelemetryConnector:
         await self._dump(data)
 
         # List of all processed spans
-        all_spans: List[dict] = []
+        all_spans: list[dict] = []
 
         for resource in data.resource_spans:
             scope_spans = resource.scope_spans
@@ -197,7 +196,7 @@ class OpenTelemetryConnector:
 
 async def fetch_spans_for_task(
     project_id: str, task_id: str
-) -> List[StandardSpanModel]:
+) -> list[StandardSpanModel]:
     """
     Fetch all the spans linked to a task_id
     """

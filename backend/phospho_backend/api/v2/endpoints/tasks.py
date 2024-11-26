@@ -1,5 +1,4 @@
 import asyncio
-from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
@@ -97,7 +96,7 @@ async def get_task(
 async def post_flag_task(
     task_id: str,
     taskFlagRequest: TaskFlagRequest,
-    org: Optional[OrgApiKeyValidation] = Depends(authenticate_org_key_no_exception),
+    org: OrgApiKeyValidation | None = Depends(authenticate_org_key_no_exception),
 ) -> Task:
     """
     Set the human evalutation of the task to be 'success' or 'failure'
@@ -124,7 +123,7 @@ async def post_flag_task(
 async def post_human_eval_task(
     task_id: str,
     taskHumanEvalRequest: TaskHumanEvalRequest,
-    org: Optional[dict] = Depends(authenticate_org_key_no_exception),
+    org: dict | None = Depends(authenticate_org_key_no_exception),
 ) -> Task:
     """
     Set the human evalutation of the task to be 'success' or 'failure'
