@@ -7,7 +7,7 @@ from phospho_backend.services.mongo.events import (
     get_last_event_for_task,
     remove_event,
 )
-import argilla as rg
+import argilla as rg  # type: ignore
 import pandas as pd
 from phospho_backend.api.platform.models.integrations import (
     DatasetCreationRequest,

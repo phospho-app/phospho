@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from propelauth_py.user import User
+from propelauth_py.user import User  # type: ignore
 
 from phospho_backend.security.authentification import propelauth
 

@@ -67,7 +67,7 @@ async def run_backtests(
 
     logger.info(f"Running backtests for project {project_id}")
     provider, model = phospho.lab.get_provider_and_model(provider_and_model)
-    client = phospho.lab.get_async_client(provider, api_key=openai_api_key)
+    client = phospho.lab.get_async_client(provider, api_key=openai_api_key)  # type: ignore
 
     all_messages = BacktestLoader(project_id=project_id, filters=filters)
 
@@ -82,7 +82,7 @@ async def run_backtests(
             model=model,
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": message.role, "content": message.content},
+                {"role": message.role, "content": message.content},  # type: ignore
             ],
         )
         response_text = response.choices[0].message.content

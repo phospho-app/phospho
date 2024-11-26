@@ -30,7 +30,7 @@ def send_email(
     }
 
     if config.ENVIRONMENT != "preview":
-        _ = resend.Emails.send(params)
+        resend.Emails.send(params)  # type: ignore
         logger.info(f"Sent email to {to_email}")
 
 
@@ -61,7 +61,7 @@ def send_welcome_email(to_email: str):
     if config.ENVIRONMENT != "preview" and config.ENVIRONMENT != "test":
         logger.info(f"Sending welcome email to {to_email}")
         try:
-            resend.Emails.send(params)
+            resend.Emails.send(params)  # type: ignore
         except Exception as e:
             logger.error(f"Error sending welcome email to {to_email}: {e}")
 
@@ -180,4 +180,4 @@ def send_payment_issue_email(to_email: str):
             "reply_to": "paul-louis@phospho.ai",
         }
 
-        _ = resend.Emails.send(params)
+        resend.Emails.send(params)  # type: ignore

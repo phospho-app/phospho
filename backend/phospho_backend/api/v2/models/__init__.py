@@ -1,7 +1,6 @@
 from .events import (
     DetectEventInMessagesRequest,
     DetectEventsInTaskRequest,
-    Event,
     EventDetectionReply,
     Events,
 )
@@ -15,21 +14,17 @@ from .log import (
 from .models import Model, ModelsResponse
 from .projects import (
     ComputeJobsRequest,
-    EventDefinition,
     FlattenedTasksRequest,
-    Project,
     ProjectCreationRequest,
     Projects,
     ProjectUpdateRequest,
     UserMetadata,
     Users,
-    ProjectDataFilters,
     QuerySessionsTasksRequest,
 )
-from .sessions import Session, SessionCreationRequest, Sessions, SessionUpdateRequest
+from .sessions import SessionCreationRequest, Sessions, SessionUpdateRequest
 from .tasks import (
     FlattenedTasks,
-    Task,
     TaskCreationRequest,
     TaskFlagRequest,
     Tasks,
@@ -42,4 +37,12 @@ from .embeddings import (
     EmbeddingResponseData,
     EmbeddingUsage,
     EmbeddingResponse,
+)
+from phospho.models import (
+    Task,
+    Session,
+    EventDefinition,
+    Project,
+    Event,
+    ProjectDataFilters,
 )

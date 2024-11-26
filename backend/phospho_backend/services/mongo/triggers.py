@@ -26,7 +26,7 @@ def aggregate_tasks_into_sessions(tasks: List[Task], project_id: str) -> List[Se
                 sessions[task.session_id].preview = task.preview()
             if (
                 sessions[task.session_id].last_message_ts is not None
-                and task.created_at > sessions[task.session_id].last_message_ts
+                and task.created_at > sessions[task.session_id].last_message_ts  # type: ignore
             ):
                 sessions[task.session_id].last_message_ts = task.created_at
             sessions[task.session_id].session_length += 1

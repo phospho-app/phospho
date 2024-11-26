@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from propelauth_fastapi import User
+from propelauth_fastapi import User  # type: ignore
 
 from phospho_backend.api.platform.models import (
     OnboardingSurvey,
