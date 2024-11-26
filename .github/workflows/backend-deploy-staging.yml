@@ -219,8 +219,6 @@ jobs:
             --set-env-vars MISTRAL_API_KEY=$MISTRAL_API_KEY \
             --image europe-west1-docker.pkg.dev/portal-385519/phospho-backend/app:staging
 
-  # add deploy_ai_hub_staging job here
-
   deploy_ai_hub_staging:
     runs-on: ubuntu-latest
     environment: staging
@@ -256,7 +254,7 @@ jobs:
           cp -r phospho-python ai-hub/phospho-python
           cp -r backend ai-hub/backend
           cd ai-hub
-          gcloud builds submit --config cloudbuild-production.yaml
+          gcloud builds submit --config cloudbuild-staging.yaml
 
       - name: Deploy to Cloud Run in Staging Env
         env:
@@ -274,7 +272,7 @@ jobs:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: |
-          gcloud run deploy phospho-proprietary-ai-hub-staging \
+          gcloud run deploy phospho-ai-hub-staging \
             --project $GCP_PROJECT_ID \
             --port 8080 \
             --region europe-west1 \
@@ -290,7 +288,7 @@ jobs:
             --cpu 4 \
             --memory 2Gi \
             --no-cpu-throttling \
-            --image europe-west1-docker.pkg.dev/portal-385519/phospho-proprietary-ai-hub/app:staging
+            --image europe-west1-docker.pkg.dev/portal-385519/phospho-ai-hub/app:staging
 
   run_python_integration_tests:
     needs: [deploy_extractor_staging, deploy_backend_staging]
