@@ -5,3 +5,4 @@ streamlit_feedback
 openpyxl
 opentelemetry-instrumentation-openai
 opentelemetry-sdk
+opentelemetry-exporter-otlp

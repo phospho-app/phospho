@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "phospho"
-version = "0.3.44"
+version = "0.3.45"
 description = "Text Analytics for LLM apps"
 authors = ["phospho <contact@phospho.ai>"]
 readme = "README.md"
@@ -20,6 +20,7 @@ rich = "^13.7.1"
 typer = { extras = ["all"], version = ">=0.6" }
 # Tracing
 opentelemetry-sdk = "^1.27.0"
+opentelemetry-exporter-otlp = "^1.27.0"
 
 # Optional dependencies for the lab
 openai = { version = "^1.12.0", optional = true }
