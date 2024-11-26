@@ -185,9 +185,9 @@ def fetch_users_from_org(org_id: str):
     )
 
     # Get the number of users
-    number_of_users = first_user_response.get("total_users")
+    number_of_users = first_user_response.total_users
 
-    users = first_user_response.get("users")
+    users = first_user_response.users
 
     if number_of_users > 99:  # max nb of users on 1 page
         # Get all the users
