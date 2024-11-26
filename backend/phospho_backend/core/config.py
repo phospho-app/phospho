@@ -182,14 +182,15 @@ if CUSTOMERIO_WRITE_KEY is None:
     logger.warning("CUSTOMERIO_WRITE_KEY is missing from the environment variables")
 
 TEMPORAL_HOST_URL = os.getenv("TEMPORAL_HOST_URL")
-if TEMPORAL_HOST_URL is None:
-    raise Exception("TEMPORAL_HOST_URL is missing from the environment variables")
 TEMPORAL_NAMESPACE = os.getenv("TEMPORAL_NAMESPACE")
-if TEMPORAL_NAMESPACE is None:
-    raise Exception("TEMPORAL_NAMESPACE is missing from the environment variables")
+
 try:
-    TEMPORAL_MTLS_TLS_CERT = b64decode(os.getenv("TEMPORAL_MTLS_TLS_CERT_BASE64"))
-    TEMPORAL_MTLS_TLS_KEY = b64decode(os.getenv("TEMPORAL_MTLS_TLS_KEY_BASE64"))
+    TEMPORAL_MTLS_TLS_CERT: bytes | None = b64decode(
+        os.environ["TEMPORAL_MTLS_TLS_CERT_BASE64"]
+    )
+    TEMPORAL_MTLS_TLS_KEY: bytes | None = b64decode(
+        os.environ["TEMPORAL_MTLS_TLS_KEY_BASE64"]
+    )
 except Exception:
     logger.warning(
         "TEMPORAL_MTLS_TLS_CERT_BASE64 or TEMPORAL_MTLS_TLS_KEY_BASE64 is missing from the environment variables"

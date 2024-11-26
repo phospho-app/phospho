@@ -96,13 +96,21 @@ class ExtractorClient:
         self.project_id = project_id
         self.temporal_client = None
 
-    async def connect_temporal_client(self):
+    async def connect_temporal_client(self) -> None:
         """
         Connects to the Temporal server
         """
         if self.temporal_client is not None:
             # Already connected
             return
+        if config.TEMPORAL_HOST_URL is None:
+            raise Exception(
+                "TEMPORAL_HOST_URL is missing from the environment variables"
+            )
+        if config.TEMPORAL_NAMESPACE is None:
+            raise Exception(
+                "TEMPORAL_NAMESPACE is missing from the environment variables"
+            )
 
         if config.ENVIRONMENT in ["production", "staging"]:
             client_cert = config.TEMPORAL_MTLS_TLS_CERT
