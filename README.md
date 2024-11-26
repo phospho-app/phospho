@@ -89,3 +89,28 @@ _With love and baguettes from Paris, the phospho team 🥖💚_
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=phospho-app/phospho&type=Date)](https://star-history.com/#phospho-app/phospho&Date)
+
+## Installation
+
+### Requirements
+
+This project uses Poetry and a version of Python above 3.11
+
+1. **Create a Virtual Environment**  
+   Run the following command to create a virtual environment:
+
+```bash
+# 1 - enter backend
+cd backend
+# 2 first option - create a virtual environment
+conda create -n phospho-env python=3.11
+# 2 second option - create a virtual environment
+python -m venv
+```
+
+2. **Install and Run the Phospho Platform**
+   To set up and run the Phospho platform locally, follow these steps:
+
+   - **Frontend**: Access the `platform`folder through the terminal. Refer to the instructions in the README file located in the `platform` folder.
+   - **Backend**: Access the `platform`folder through the terminal.Refer to the README file located in the `backend` folder.
+   - **AI Hub**: Access the `ai-hub` folder through the terminal. Follow the instructions in the README file located in the `ai-hub` folder.

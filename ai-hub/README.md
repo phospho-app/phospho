@@ -1,8 +1,10 @@
-# proprietary-ai-hub
+# ai-hub
 
 The dedicated service handling proprietary AI related tasks (training and inference).
 
 ## Installation
+
+Be sure you run the following command in a terminal located in this ai-hub folder.
 
 ### Prerequisites
 
@@ -10,13 +12,15 @@ You need [poetry](https://python-poetry.org/) to install the dependencies and ma
 
 ### Install dependencies
 
+Be sure your virtual environment is activated. Install python depedencies with:
+
 ```bash
 poetry install
 ```
 
 ### Setup env variables
 
-Create a `.env` file in the root of the project and add the following variables:
+Create a `.env` file in this `ai-hub` folder and add the following variables:
 
 ```bash
 ENVIRONMENT="test" # Or "production"
