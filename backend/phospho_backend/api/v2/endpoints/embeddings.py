@@ -11,7 +11,7 @@ from phospho_backend.api.v2.models import (
 from phospho_backend.services.mongo.predict import metered_prediction
 from phospho_backend.core import config
 from phospho_backend.services.mongo.ai_hub import AIHubClient
-from propelauth_py.types import OrgApiKeyValidation
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 from phospho_backend.security import authenticate_org_key
 

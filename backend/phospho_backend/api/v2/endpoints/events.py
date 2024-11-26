@@ -12,7 +12,7 @@ from phospho_backend.security import (
 )
 from phospho_backend.security.authentification import raise_error_if_not_in_pro_tier
 from phospho_backend.services.mongo.extractor import ExtractorClient
-from propelauth_py.types import OrgApiKeyValidation
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 
 router = APIRouter(tags=["Events"])

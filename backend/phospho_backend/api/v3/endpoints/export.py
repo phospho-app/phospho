@@ -20,6 +20,7 @@ from phospho_backend.api.v3.models.analytics import (
 )
 from phospho_backend.utils import cast_datetime_or_timestamp_to_timestamp
 from phospho_backend.services.mongo.users import fetch_users_metadata
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 router = APIRouter(tags=["Export"])
 
@@ -31,7 +32,7 @@ router = APIRouter(tags=["Export"])
 )
 async def post_metadata_pivot(
     pivot_query: AnalyticsQuery,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ) -> AnalyticsResponse:
     """
     Create a pivot table for metadata in a project.
@@ -66,7 +67,7 @@ async def post_metadata_pivot(
 async def get_users(
     project_id: str,
     query: QueryUserMetadataRequest,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ) -> Users:
     """
     Get metadata about the end-users of a project

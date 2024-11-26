@@ -13,7 +13,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Header
 
 from phospho.models import PipelineResults, ProjectDataFilters
 from phospho import lab
-from propelauth_py.types import OrgApiKeyValidation
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 router = APIRouter(tags=["Run"])
 

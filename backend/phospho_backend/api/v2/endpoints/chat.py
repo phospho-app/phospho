@@ -34,7 +34,7 @@ from phospho_backend.services.mongo.organizations import create_project_by_org
 from phospho_backend.services.mongo.extractor import ExtractorClient
 from phospho_backend.api.v2.models.log import LogEvent
 from typing import cast
-from propelauth_py.types import OrgApiKeyValidation
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 
 router = APIRouter(tags=["chat"])

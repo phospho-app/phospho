@@ -19,7 +19,7 @@ from phospho_backend.services.mongo.tasks import (
     get_all_tasks,
     update_from_flattened_tasks,
 )
-from propelauth_py.types import OrgApiKeyValidation
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 router = APIRouter(tags=["Projects"])
 

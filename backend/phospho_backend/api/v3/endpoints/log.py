@@ -18,7 +18,7 @@ from phospho_backend.services.mongo.extractor import ExtractorClient
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from loguru import logger
 from opentelemetry.proto.trace.v1.trace_pb2 import TracesData  # type: ignore
-from propelauth_py.types import OrgApiKeyValidation
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 router = APIRouter(tags=["Log"])
 

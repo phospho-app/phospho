@@ -25,7 +25,7 @@ from phospho_backend.services.mongo.tasks import (
     human_eval_task,
 )
 from loguru import logger
-from propelauth_py.types import OrgApiKeyValidation
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 
 router = APIRouter(tags=["Tasks"])
@@ -183,7 +183,7 @@ async def post_human_eval_task(
 async def post_update_task(
     task_id: str,
     taskUpdateRequest: TaskUpdateRequest,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ) -> Task:
     """
     Edit the metadata of a task

@@ -18,7 +18,7 @@ from phospho_backend.services.mongo.sessions import (
     fetch_session_tasks,
     edit_session_metadata,
 )
-from propelauth_py.types import OrgApiKeyValidation
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 router = APIRouter(tags=["Sessions"])
 

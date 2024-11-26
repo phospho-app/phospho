@@ -19,7 +19,7 @@ from phospho_backend.security import (
 from phospho_backend.services.mongo.emails import send_quota_exceeded_email
 from phospho_backend.core import config
 from phospho_backend.services.log import create_task_and_process_logs
-from propelauth_py.types import OrgApiKeyValidation
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 router = APIRouter(tags=["Logs"])
 

@@ -11,7 +11,7 @@ from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.security.utils import get_authorization_scheme_param
 from loguru import logger
 from propelauth_fastapi import User, init_auth  # type: ignore
-from propelauth_py.types import OrgApiKeyValidation
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 from phospho_backend.core import config
 from phospho_backend.db.mongo import get_mongo_db
