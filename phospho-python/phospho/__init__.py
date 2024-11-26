@@ -368,6 +368,7 @@ def _log_single_event(
     if steps is not None and len(steps) > 0:
         # Manual intermediate calls tracing
         from opentelemetry.sdk.trace import TracerProvider
+
         from .tracing import get_batch_span_processor
 
         # Create a new tracer, with a simple batch span processor.
@@ -400,6 +401,7 @@ def _log_single_event(
         # session_id, and metadata
 
         from opentelemetry.sdk.trace import TracerProvider
+
         from .tracing import get_global_batch_span_processor
 
         # Create a new tracer, with a simple batch span processor.
@@ -993,7 +995,7 @@ def flush() -> None:
         consumer.send_batch()
 
     if tracing_initialized:
-        from .tracing import global_batch_span_processor, batch_span_processor
+        from .tracing import batch_span_processor, global_batch_span_processor
 
         if global_batch_span_processor:
             global_batch_span_processor.force_flush()

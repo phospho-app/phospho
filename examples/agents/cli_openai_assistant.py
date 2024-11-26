@@ -15,9 +15,8 @@ Launch the script:
 python cli_openai_assistant.py
 ```
 """
-from dotenv import load_dotenv
-
 import phospho
+from dotenv import load_dotenv
 
 load_dotenv()
 

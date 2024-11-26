@@ -1,8 +1,8 @@
+from loguru import logger
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http import models
-from extractor.core import config
-from loguru import logger
 
+from extractor.core import config
 
 qdrant_db = None
 
@@ -23,7 +23,7 @@ async def init_qdrant():
     try:
         existing_collections = await qdrant_db.get_collections()
         logger.info(f"Existing collections: {existing_collections}")
-        # /!\ Once the collection is created, it cannot be updated
+        # ! Once the collection is created, it cannot be updated
         # To change the underlying embedding model, we need to create a new collection
         # And re-embed all the tasks
         if "tasks" in [

@@ -2,20 +2,19 @@
 
 ## Local install and setup
 
-This project uses Poetry and Python 3.11
+This project uses Poetry and Python 3.11.
+
+Be sure you run the following in your terminal located in the backend folder.
+Start by installing python dependencies with:
 
 ```bash
-# 1 - enter backend
-cd backend
-# 2 first option - create a virtual environment
-conda create -n phospho-env python=3.11
-# 2 second option - create a virtual environment
-python -m venv
-# 3 - install poetry
+# 1 - install poetry
 pip install poetry
-# 4 - install backend dependancies
+# 2 - install backend dependancies
 poetry install
 ```
+
+Create a .env file and fill the necessary information following this example:
 
 ### Environment file
 
@@ -62,11 +61,13 @@ AZURE_OPENAI_ENDPOINT=""
 
 ### Run backend server
 
+Now you can run the backend server through this command:
+
 ```
-poetry run uvicorn app.main:app --reload
+poetry run uvicorn phospho_backend.main:app --reload
 ```
 
-### Run tests
+### (Optionnal) Run tests
 
 1. Make sure you have setup your environment variables. To load the .env files:
 
@@ -77,7 +78,7 @@ poetry run uvicorn app.main:app --reload
 2. Start the local server in test mode :
 
    ```bash
-   poetry run uvicorn app.main:app --reload
+   poetry run uvicorn phospho_backend.main:app --reload
    ```
 
 3. Run tests through poetry

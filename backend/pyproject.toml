@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "app"
+name = "phospho_backend"
 version = "0.1.0"
 description = "Backend of Phospho"
 authors = ["Nicolas Oulianov <nicolas@phospho.ai>"]
@@ -7,7 +7,7 @@ license = "Copyright Phospho 2024"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.13"
+python = "^3.11, <3.13"
 aiohttp = ">=3.8.6"
 fastapi = ">=0.109.0"
 loguru = ">=0.7.2"
@@ -15,15 +15,14 @@ motor = ">=3.3.2"
 numpy = ">=1.26.3, <2.0.0"
 openai = ">=1.7.2"
 openpyxl = ">=3.1.2"
-pandas = "2.1.4"
+pandas = "^2.1.4"
 propelauth-fastapi = ">=2.1.8"
 propelauth-py = ">=3.1.9"
-protobuf = "4.25.2"
-pydantic = "2.5.3"
-pytest = "7.4.3"
+pydantic = "^2.5.3"
+pytest = "^7.4.3"
 pytest-asyncio = "^0.23.3"
-python-dotenv = "1.0.0"
-requests = "2.32.3"
+python-dotenv = "^1.0.0"
+requests = "^2.32.3"
 tiktoken = ">=0.5.1"
 uvicorn = ">=0.23.2"
 sentry-sdk = { version = ">=1.39.1", extras = ["fastapi"] }
@@ -48,6 +47,8 @@ customerio-cdp-analytics = "^0.0.2"
 temporalio = "^1.6.0"
 types-requests = "^2.32.0.20240914"
 opentelemetry-proto = "^1.27.0"
+pandas-stubs = "^2.2.3.241009"
+tqdm-stubs = "^0.2.1"
 
 [tool.poetry.group.dev]
 optional = true

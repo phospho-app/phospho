@@ -1,6 +1,7 @@
 import logging
-import pymongo
 from typing import Dict, List
+
+import pymongo
 
 logger = logging.getLogger(__name__)
 

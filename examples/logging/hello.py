@@ -1,7 +1,7 @@
-import phospho
-import openai
-
 from pprint import pprint
+
+import openai
+import phospho
 
 phospho.init()
 openai_client = openai.OpenAI()

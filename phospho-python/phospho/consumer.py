@@ -1,12 +1,11 @@
-from .log_queue import LogQueue
-from .client import Client, PhosphoClientSideError
-
-import time
 import atexit
+import logging
 import os
+import time
 from threading import Thread
 
-import logging
+from .client import Client, PhosphoClientSideError
+from .log_queue import LogQueue
 
 logger = logging.getLogger(__name__)
 

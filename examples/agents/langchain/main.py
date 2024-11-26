@@ -56,7 +56,6 @@ retrieval_chain = (
 
 from phospho.integrations import PhosphoLangchainCallbackHandler
 
-
 while True:
     text = input("Enter a question: ")
     response = retrieval_chain.invoke(

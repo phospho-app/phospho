@@ -4,7 +4,7 @@ from typing import Literal, Optional, Tuple, cast
 import phospho.config as config
 
 try:
-    from openai import AsyncOpenAI, OpenAI, AsyncAzureOpenAI, AzureOpenAI
+    from openai import AsyncAzureOpenAI, AsyncOpenAI, AzureOpenAI, OpenAI
 
 except ImportError:
     # Define dummy classes to avoid import errors
@@ -116,7 +116,7 @@ def get_async_client(
     Return an async OpenAI client for the specified provider.
     """
     try:
-        from openai import AsyncOpenAI, AsyncAzureOpenAI
+        from openai import AsyncAzureOpenAI, AsyncOpenAI
     except ImportError:
         raise ImportError(
             "OpenAI is not installed. Please install it using `pip install openai`"

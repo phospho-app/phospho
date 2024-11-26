@@ -6,9 +6,10 @@ We check that the onboarding and logging flow works as expected.
 
 import os
 import time
+
+import openai
 import phospho
 import requests  # type: ignore
-import openai
 
 
 def test_onboarding(backend_url, org_id, access_token, api_key):

@@ -1,6 +1,6 @@
-from datetime import datetime
 import logging
 import os
+from datetime import datetime
 from typing import List
 
 import functions_framework
@@ -21,7 +21,7 @@ from email_templates import (
     email_1000_tasks,
     email_no_task_for_1_week,
 )
-from email_weekly_report import write_weekly_report, weekly_report_criterias
+from email_weekly_report import weekly_report_criterias, write_weekly_report
 from organizations import fetch_organizations
 
 logging.basicConfig(level=logging.INFO)  # TODO : change to INFO

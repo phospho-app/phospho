@@ -1,0 +1,15 @@
+options:
+  logging: CLOUD_LOGGING_ONLY
+  pool: {}
+  machineType: "N1_HIGHCPU_8"
+projectId: portal-385519
+steps:
+  # Doc : https://github.com/GoogleContainerTools/kaniko
+  - name: "gcr.io/kaniko-project/executor:latest"
+    args:
+      - --destination=europe-west1-docker.pkg.dev/portal-385519/phospho-proprietary-ai-hub/app:production
+      - --cache=true
+      - --cache-ttl=72h # Expiration time of the cache. This means dependencies will be cached for 72 hours.
+      # https://github.com/GoogleContainerTools/kaniko/issues/1669
+      - --compressed-caching=false
+      - --cache-copy-layers=true

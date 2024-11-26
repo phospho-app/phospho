@@ -6,14 +6,17 @@ Major pytest fixtures (app, db,...) are defined here
 import logging
 import os
 
+import phospho
 import pymongo
 import pytest
-from app.core import config  # type: ignore
-from app.db.mongo import close_mongo_db, connect_and_init_db, get_mongo_db  # type: ignore
-from app.security.authentification import propelauth  # type: ignore
-from phospho.models import Project, Task, ProjectSettings, EventDefinition
-from typing import Dict, List
-import phospho
+from phospho.models import EventDefinition, Project, ProjectSettings, Task
+from phospho_backend.core import config  # type: ignore
+from phospho_backend.db.mongo import (  # type: ignore
+    close_mongo_db,
+    connect_and_init_db,
+    get_mongo_db,
+)
+from phospho_backend.security.authentification import propelauth  # type: ignore
 
 # Check that we are not running the tests on the production database
 assert config.ENVIRONMENT != "production"
@@ -25,7 +28,7 @@ logger = logging.getLogger(__name__)
 # We redefine cleanup here to be able to run tests locally
 def cleanup(
     mongo_db: pymongo.MongoClient,
-    collections_to_cleanup: Dict[str, List[str]],
+    collections_to_cleanup: dict[str, list[str]],
 ) -> None:
     """
     DELETE the documents in the collections specified in the collections_to_cleanup dict
@@ -111,7 +114,7 @@ def access_token() -> str:
     token = propelauth.create_access_token(
         user_id,
         5,  # minutes of validity
-    ).get("access_token")
+    ).access_token
     return token
 
 
