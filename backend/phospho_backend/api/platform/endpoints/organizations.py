@@ -426,7 +426,7 @@ async def post_stripe_webhook(
                         )
                     else:
                         await slack_notification(
-                            f"/!\ Automatic activation failed! Stripe checkout session {session.id}"
+                            f"! Automatic activation failed! Stripe checkout session {session.id}"
                             + " was processed but has no org_id in metadata and no customer email"
                         )
                 else:
@@ -491,7 +491,7 @@ async def post_stripe_webhook(
                         f"No org_id in metadata for stripe subscription {subscription.id}"
                     )
                     await slack_notification(
-                        f"/!\ Automatic upgrade failed! Stripe subscription {subscription.id}"
+                        f"! Automatic upgrade failed! Stripe subscription {subscription.id}"
                         + " was updated but has no org_id in metadata"
                     )
             elif plan_product == config.PRO_PLAN_STRIPE_PRODUCT_ID and not plan_active:
@@ -510,7 +510,7 @@ async def post_stripe_webhook(
                         f"No org_id in metadata for stripe subscription {subscription.id}"
                     )
                     await slack_notification(
-                        f"/!\ Automatic downgrade failed! Stripe subscription {subscription.id}"
+                        f"! Automatic downgrade failed! Stripe subscription {subscription.id}"
                         + " was updated but has no org_id in metadata"
                     )
 
@@ -532,7 +532,7 @@ async def post_stripe_webhook(
                     f"No org_id in metadata for stripe subscription {subscription.id}"
                 )
                 await slack_notification(
-                    f"/!\ Automatic downgrade failed! Stripe subscription {subscription.id}"
+                    f"! Automatic downgrade failed! Stripe subscription {subscription.id}"
                     + " was updated but has no org_id in metadata"
                 )
 
