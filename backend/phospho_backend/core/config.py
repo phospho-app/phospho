@@ -58,14 +58,6 @@ if ENVIRONMENT == "test":
 else:
     PHOSPHO_ORG_ID = "13b5f728-21a5-481d-82fa-0241ca0e07b9"
 
-### EXTRACTOR (phospho service) ###
-EXTRACTOR_SECRET_KEY = os.getenv("EXTRACTOR_SECRET_KEY")
-EXTRACTOR_URL = os.getenv("EXTRACTOR_URL")
-# TODO: move this to a startup check
-assert (
-    EXTRACTOR_URL is not None
-), "EXTRACTOR_URL is missing from the environment variables"
-
 ### PHOSPHO AI HUB ###
 PHOSPHO_AI_HUB_URL = os.getenv("PHOSPHO_AI_HUB_URL", None)
 PHOSPHO_AI_HUB_API_KEY = os.getenv("PHOSPHO_AI_HUB_API_KEY", None)
