@@ -11,6 +11,7 @@ from phospho_backend.api.v2.models import (
 from phospho_backend.services.mongo.predict import metered_prediction
 from phospho_backend.core import config
 from phospho_backend.services.mongo.ai_hub import AIHubClient
+from propelauth_py.types import OrgApiKeyValidation
 
 from phospho_backend.security import authenticate_org_key
 
@@ -27,10 +28,10 @@ encoding = tiktoken.get_encoding("cl100k_base")
 async def post_embeddings(
     background_tasks: BackgroundTasks,
     request_body: EmbeddingRequest,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ):
-    org_metadata = org["org"].get("metadata", {})
-    org_id = org["org"]["org_id"]
+    org_metadata = org.org.metadata or {}
+    org_id = org.org.org_id
 
     # Check if the organization has a payment method
     customer_id = None

@@ -34,6 +34,8 @@ from phospho_backend.services.mongo.organizations import create_project_by_org
 from phospho_backend.services.mongo.extractor import ExtractorClient
 from phospho_backend.api.v2.models.log import LogEvent
 from typing import cast
+from propelauth_py.types import OrgApiKeyValidation
+
 
 router = APIRouter(tags=["chat"])
 
@@ -269,7 +271,7 @@ async def create(
     request: Request,
     create_request: CreateRequest,
     background_tasks: BackgroundTasks,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ):  # Can be ChatCompletion or StreamingResponse
     """
     Generate a chat completion
@@ -279,8 +281,8 @@ async def create(
     """
     # Get customer_id
     logger.info(f"Received chat completions request for project {project_id}")
-    org_metadata = org["org"].get("metadata", {})
-    org_id = org["org"]["org_id"]
+    org_metadata = org.org.metadata or {}
+    org_id = org.org.org_id
     customer_id = None
 
     if "customer_id" in org_metadata.keys():

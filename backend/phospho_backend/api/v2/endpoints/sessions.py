@@ -18,6 +18,7 @@ from phospho_backend.services.mongo.sessions import (
     fetch_session_tasks,
     edit_session_metadata,
 )
+from propelauth_py.types import OrgApiKeyValidation
 
 router = APIRouter(tags=["Sessions"])
 
@@ -29,7 +30,7 @@ router = APIRouter(tags=["Sessions"])
 )
 async def get_session(
     session_id: str,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ) -> Session:
     session_model = await get_session_by_id(session_id)
     await verify_propelauth_org_owns_project_id(org, session_model.project_id)
@@ -43,14 +44,14 @@ async def get_session(
 )
 async def post_create_session(
     sessionCreationRequest: SessionCreationRequest,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ) -> Session:
     await verify_propelauth_org_owns_project_id(org, sessionCreationRequest.project_id)
     try:
         created_session = await create_session(
             project_id=sessionCreationRequest.project_id,
             data=sessionCreationRequest.data,
-            org_id=org["org"].get("org_id"),
+            org_id=org.org.org_id,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Session creation failed: {e}")
@@ -63,7 +64,7 @@ async def post_create_session(
     description="Get the transcript of a session",
 )
 async def get_session_transcript(
-    session_id: str, org: dict = Depends(authenticate_org_key)
+    session_id: str, org: OrgApiKeyValidation = Depends(authenticate_org_key)
 ) -> dict:
     session = await get_session_by_id(session_id)
     await verify_propelauth_org_owns_project_id(org, session.project_id)
@@ -77,7 +78,9 @@ async def get_session_transcript(
     description="Get all the tasks of a session",
 )
 async def get_session_tasks(
-    session_id: str, limit: int = 1000, org: dict = Depends(authenticate_org_key)
+    session_id: str,
+    limit: int = 1000,
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ) -> Tasks:
     # TODO : add pagination, filtering, sorting
 
@@ -97,7 +100,7 @@ async def get_session_tasks(
 async def update_session_metadata(
     session_id: str,
     sessions_update_metadata_request: SessionUpdateRequest,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ) -> Session:
     session_data = await get_session_by_id(session_id)
     await verify_propelauth_org_owns_project_id(org, session_data.project_id)

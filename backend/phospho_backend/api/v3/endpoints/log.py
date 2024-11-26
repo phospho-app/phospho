@@ -18,7 +18,7 @@ from phospho_backend.services.mongo.extractor import ExtractorClient
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from loguru import logger
 from opentelemetry.proto.trace.v1.trace_pb2 import TracesData  # type: ignore
-
+from propelauth_py.types import OrgApiKeyValidation
 
 router = APIRouter(tags=["Log"])
 
@@ -31,7 +31,7 @@ router = APIRouter(tags=["Log"])
 async def store_batch_of_log_events(
     log_request: LogRequest,
     background_tasks: BackgroundTasks,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ) -> Optional[LogReply]:
     """Store the log_content in the logs database"""
 
@@ -48,7 +48,7 @@ async def store_batch_of_log_events(
     logs_to_process: List[MinimalLogEventForMessages] = []
     extra_logs_to_save: List[MinimalLogEventForMessages] = []
 
-    usage_quota = await get_quota_for_org(org["org"].get("org_id"))
+    usage_quota = await get_quota_for_org(org.org.org_id)
     current_usage = usage_quota.current_usage
     max_usage = usage_quota.max_usage
 
@@ -72,7 +72,7 @@ async def store_batch_of_log_events(
     # All the tasks to process were deemed as valid and the org had enough credits to process them
     extractor_client = ExtractorClient(
         project_id=log_request.project_id,
-        org_id=org["org"].get("org_id"),
+        org_id=org.org.org_id,
     )
     background_tasks.add_task(
         extractor_client.run_log_process_for_messages,
@@ -94,7 +94,7 @@ async def collect_opentelemetry_traces(
     project_id: str,
     request: Request,
     background_tasks: BackgroundTasks,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ):
     """
     This endpoint is used to log traces and intermediate LLM calls to phospho.
@@ -112,7 +112,7 @@ async def collect_opentelemetry_traces(
 
     connector = OpenTelemetryConnector(
         project_id=project_id,
-        org_id=org["org"].get("org_id"),
+        org_id=org.org.org_id,
     )
     background_tasks.add_task(
         connector.process,

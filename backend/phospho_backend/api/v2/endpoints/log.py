@@ -19,7 +19,7 @@ from phospho_backend.security import (
 from phospho_backend.services.mongo.emails import send_quota_exceeded_email
 from phospho_backend.core import config
 from phospho_backend.services.log import create_task_and_process_logs
-
+from propelauth_py.types import OrgApiKeyValidation
 
 router = APIRouter(tags=["Logs"])
 
@@ -33,7 +33,7 @@ async def store_batch_of_log_events(
     project_id: str,
     log_request: LogRequest,
     background_tasks: BackgroundTasks,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ) -> LogReply:
     """Store the batched_log_events in the logs database"""
 
@@ -123,7 +123,7 @@ async def store_batch_of_log_events(
         logs_to_process=logs_to_process,
         extra_logs_to_save=extra_logs_to_save,
         project_id=project_id,
-        org_id=org["org"].get("org_id"),
+        org_id=org.org.org_id,
     )
 
     return log_reply

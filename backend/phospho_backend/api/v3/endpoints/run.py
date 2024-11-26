@@ -13,6 +13,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Header
 
 from phospho.models import PipelineResults, ProjectDataFilters
 from phospho import lab
+from propelauth_py.types import OrgApiKeyValidation
 
 router = APIRouter(tags=["Run"])
 
@@ -31,12 +32,12 @@ This API key must have billing enabled with a valid payment method.""",
 )
 async def run_main_pipeline_on_messages(
     request: RunPipelineOnMessagesRequest,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ) -> PipelineResults:
     """Store the log_content in the logs database"""
 
     # Check the usage quota
-    usage_quota = await get_quota_for_org(org["org"].get("org_id"))
+    usage_quota = await get_quota_for_org(org.org.org_id)
     if usage_quota.plan == "hobby" or (
         usage_quota.max_usage is not None
         and usage_quota.current_usage + len(request.messages) > usage_quota.max_usage
@@ -48,7 +49,7 @@ async def run_main_pipeline_on_messages(
 
     extractor_client = ExtractorClient(
         project_id=request.project_id,
-        org_id=org["org"].get("org_id"),
+        org_id=org.org.org_id,
     )
     # Need to create task objects before running the pipeline
     pipeline_result = await extractor_client.run_main_pipeline_on_messages(
@@ -67,9 +68,9 @@ async def post_run_backtests(
     body: RunBacktestRequest,
     background_tasks: BackgroundTasks,
     openai_api_key: Annotated[str, Header()],
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ):
-    org_id = org["org"].get("org_id")
+    org_id = org.org.org_id
     usage_quota = await get_quota_for_org(org_id)
     if usage_quota.plan == "hobby" or (
         usage_quota.max_usage is not None
