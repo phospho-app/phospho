@@ -18,7 +18,7 @@ COPY ./phospho-python /phospho-python
 RUN poetry install --with dev --no-interaction --no-ansi
 
 # Copy source code
-COPY ./app /src/app
+COPY ./phospho_backend /src/phospho_backend
 
 # Run the server on port 80
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]

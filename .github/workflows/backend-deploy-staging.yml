@@ -219,6 +219,79 @@ jobs:
             --set-env-vars MISTRAL_API_KEY=$MISTRAL_API_KEY \
             --image europe-west1-docker.pkg.dev/portal-385519/phospho-backend/app:staging
 
+  # add deploy_ai_hub_staging job here
+
+    deploy_ai_hub_staging:
+    runs-on: ubuntu-latest
+    environment: staging
+
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - id: "auth"
+        uses: "google-github-actions/auth@v2"
+        env:
+          GCP_JSON_CREDENTIALS: ${{ secrets.GCP_JSON_CREDENTIALS }}
+        with:
+          credentials_json: ${{ secrets.GCP_JSON_CREDENTIALS }}
+
+      - name: Set up GCP Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      - name: "Use gcloud CLI"
+        run: "gcloud info"
+
+      - name: Build the container image
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        # https://cloud.google.com/sdk/gcloud/reference/builds/submit
+        run: |
+          cp -r phospho-python ai-hub/phospho-python
+          cp -r backend ai-hub/backend
+          cd ai-hub
+          gcloud builds submit --config cloudbuild-production.yaml
+
+      - name: Deploy to Cloud Run in Staging Env
+        env:
+          ENVIRONMENT: staging
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          MONGODB_URL: ${{ secrets.MONGODB_URL }}
+          MONGODB_NAME: ${{ vars.MONGODB_NAME }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ vars.PHOSPHO_OPENAI_PROXY_BASE_URL }}
+          TEMPORAL_HOST_URL: ${{ vars.TEMPORAL_HOST_URL }}
+          TEMPORAL_NAMESPACE: ${{ vars.TEMPORAL_NAMESPACE }}
+          TEMPORAL_MTLS_TLS_CERT_BASE64: ${{ secrets.TEMPORAL_MTLS_TLS_CERT_BASE64 }}
+          TEMPORAL_MTLS_TLS_KEY_BASE64: ${{ secrets.TEMPORAL_MTLS_TLS_KEY_BASE64 }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: |
+          gcloud run deploy phospho-proprietary-ai-hub-staging \
+            --project $GCP_PROJECT_ID \
+            --port 8080 \
+            --region europe-west1 \
+            --allow-unauthenticated \
+            --set-env-vars ENVIRONMENT=$ENVIRONMENT,MONGODB_URL=$MONGODB_URL,MONGODB_NAME=$MONGODB_NAME,SENTRY_DSN=$SENTRY_DSN \
+            --set-env-vars OPENAI_BASE_URL=$OPENAI_BASE_URL \
+            --set-env-vars OPENAI_API_KEY=$OPENAI_API_KEY \
+            --set-env-vars TEMPORAL_HOST_URL=$TEMPORAL_HOST_URL,TEMPORAL_NAMESPACE=$TEMPORAL_NAMESPACE \
+            --set-env-vars TEMPORAL_MTLS_TLS_CERT_BASE64=$TEMPORAL_MTLS_TLS_CERT_BASE64,TEMPORAL_MTLS_TLS_KEY_BASE64=$TEMPORAL_MTLS_TLS_KEY_BASE64 \
+            --set-env-vars STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY,RESEND_API_KEY=$RESEND_API_KEY \
+            --max-instances 10 \
+            --min-instances 0 \
+            --cpu 4 \
+            --memory 2Gi \
+            --no-cpu-throttling \
+            --image europe-west1-docker.pkg.dev/portal-385519/phospho-proprietary-ai-hub/app:staging
+
   run_python_integration_tests:
     needs: [deploy_extractor_staging, deploy_backend_staging]
 

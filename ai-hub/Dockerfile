@@ -10,21 +10,15 @@ RUN pip install poetry
 COPY ./pyproject.toml /src/pyproject.toml
 COPY ./poetry.lock /src/poetry.lock
 
-# Clone the phospho_backend repository directly
-RUN apt-get update && apt-get install -y git && \
-    git clone --recursive https://github.com/phospho-app/phospho.git /src/phospho_backend && \
-    rm -rf /var/lib/apt/lists/*
-
+COPY ./phospho-python/ /phospho-python
+COPY ./backend/ /backend
 
 # Install dependencies
 RUN poetry config virtualenvs.in-project true
 RUN poetry install --no-interaction --no-ansi
 
-# Install dependencies
-RUN poetry install --no-interaction --no-ansi
-
 # Copy source code
-COPY ./app /src/app
+COPY ./ai_hub /src/ai_hub
 COPY ./main.py /src/main.py
 
 EXPOSE 8080
