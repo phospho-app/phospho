@@ -111,7 +111,7 @@ def access_token() -> str:
     token = propelauth.create_access_token(
         user_id,
         5,  # minutes of validity
-    ).get("access_token")
+    ).access_token
     return token
 
 
