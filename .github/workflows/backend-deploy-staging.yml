@@ -221,7 +221,7 @@ jobs:
 
   # add deploy_ai_hub_staging job here
 
-    deploy_ai_hub_staging:
+  deploy_ai_hub_staging:
     runs-on: ubuntu-latest
     environment: staging
 
