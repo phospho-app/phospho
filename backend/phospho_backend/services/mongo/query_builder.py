@@ -1,10 +1,9 @@
 import datetime
 from typing import Literal
 
-from phospho_backend.db.mongo import get_mongo_db
-
-from phospho.models import ProjectDataFilters
 from loguru import logger
+from phospho.models import ProjectDataFilters
+from phospho_backend.db.mongo import get_mongo_db
 
 
 class QueryBuilder:

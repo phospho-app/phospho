@@ -1,11 +1,12 @@
-from extractor.utils import generate_timestamp
+from typing import List, Optional, Union, cast
+
+from loguru import logger
+from phospho.lab.utils import get_tokenizer, num_tokens_from_messages
 from phospho.models import Task
 from phospho.utils import filter_nonjsonable_keys, is_jsonable
-from phospho.lab.utils import get_tokenizer, num_tokens_from_messages
 
 from extractor.models.log import LogEventForTasks
-from loguru import logger
-from typing import Union, Optional, cast, List
+from extractor.utils import generate_timestamp
 
 
 def convert_additional_data_to_dict(

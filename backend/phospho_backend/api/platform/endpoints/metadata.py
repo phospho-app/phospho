@@ -1,22 +1,22 @@
 import datetime
-from fastapi import APIRouter, Depends
 
+from fastapi import APIRouter, Depends
 from phospho.models import ProjectDataFilters
 from propelauth_fastapi import User  # type: ignore
-from phospho_backend.security.authentification import propelauth
-from phospho_backend.security import verify_if_propelauth_user_can_access_project
-
-# Service
-from phospho_backend.services.mongo.dataviz import (
-    collect_unique_metadata_field_values,
-    collect_unique_metadata_fields,
-    breakdown_by_sum_of_metadata_field,
-)
 
 # Models
 from phospho_backend.api.platform.models import (
-    MetadataPivotResponse,
     MetadataPivotQuery,
+    MetadataPivotResponse,
+)
+from phospho_backend.security import verify_if_propelauth_user_can_access_project
+from phospho_backend.security.authentification import propelauth
+
+# Service
+from phospho_backend.services.mongo.dataviz import (
+    breakdown_by_sum_of_metadata_field,
+    collect_unique_metadata_field_values,
+    collect_unique_metadata_fields,
 )
 
 router = APIRouter(tags=["Metadata"])

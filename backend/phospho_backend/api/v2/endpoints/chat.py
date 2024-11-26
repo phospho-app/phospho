@@ -15,9 +15,9 @@ from openai.types.chat.chat_completion import (
     Choice,
 )
 from openai.types.chat.chat_completion_chunk import ChatCompletionChunk
+from phospho.lab.language_models import get_async_client, get_provider_and_model
 from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
-from phospho.lab.language_models import get_async_client, get_provider_and_model
 from phospho_backend.api.v2.models.log import LogEvent
 from phospho_backend.core import config
 from phospho_backend.security.authentification import authenticate_org_key

@@ -1,11 +1,11 @@
 from typing import Any
-from phospho_backend.services.mongo.extractor import bill_on_stripe
-from phospho_backend.db.mongo import get_mongo_db
-from phospho_backend.db.models import JobResult
-from loguru import logger
-import tiktoken
 
+import tiktoken
+from loguru import logger
 from phospho.lab.models import ResultType
+from phospho_backend.db.models import JobResult
+from phospho_backend.db.mongo import get_mongo_db
+from phospho_backend.services.mongo.extractor import bill_on_stripe
 
 encoding = tiktoken.get_encoding("cl100k_base")
 

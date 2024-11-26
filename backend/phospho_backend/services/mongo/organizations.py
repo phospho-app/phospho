@@ -4,14 +4,13 @@ from typing import Literal
 import pandas as pd
 import pydantic
 import stripe
+from fastapi import HTTPException
+from loguru import logger
+from phospho.models import Recipe, UsageQuota
 from phospho_backend.core import config
 from phospho_backend.db.models import Project
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.security.authentification import propelauth
-from fastapi import HTTPException
-from loguru import logger
-
-from phospho.models import Recipe, UsageQuota
 
 
 async def get_projects_from_org_id(org_id: str, limit: int = 1000) -> list[Project]:

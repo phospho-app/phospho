@@ -1,3 +1,19 @@
+from phospho.models import (
+    Event,
+    EventDefinition,
+    Project,
+    ProjectDataFilters,
+    Session,
+    Task,
+)
+
+from .embeddings import (
+    Embedding,
+    EmbeddingRequest,
+    EmbeddingResponse,
+    EmbeddingResponseData,
+    EmbeddingUsage,
+)
 from .events import (
     DetectEventInMessagesRequest,
     DetectEventsInTaskRequest,
@@ -18,31 +34,16 @@ from .projects import (
     ProjectCreationRequest,
     Projects,
     ProjectUpdateRequest,
+    QuerySessionsTasksRequest,
     UserMetadata,
     Users,
-    QuerySessionsTasksRequest,
 )
 from .sessions import SessionCreationRequest, Sessions, SessionUpdateRequest
 from .tasks import (
     FlattenedTasks,
     TaskCreationRequest,
     TaskFlagRequest,
+    TaskHumanEvalRequest,
     Tasks,
     TaskUpdateRequest,
-    TaskHumanEvalRequest,
-)
-from .embeddings import (
-    Embedding,
-    EmbeddingRequest,
-    EmbeddingResponseData,
-    EmbeddingUsage,
-    EmbeddingResponse,
-)
-from phospho.models import (
-    Task,
-    Session,
-    EventDefinition,
-    Project,
-    Event,
-    ProjectDataFilters,
 )

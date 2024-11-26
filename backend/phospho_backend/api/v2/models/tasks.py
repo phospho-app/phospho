@@ -1,9 +1,9 @@
-from pydantic import BaseModel
 from typing import Literal
 
-from phospho_backend.db.models import Task, FlattenedTask
+from pydantic import BaseModel
 from pydantic.fields import Field
 
+from phospho_backend.db.models import FlattenedTask, Task
 from phospho_backend.utils import generate_uuid
 
 

@@ -1,5 +1,6 @@
 import pymongo
 from loguru import logger
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from phospho_backend.core.config import (
     MONGODB_MAXPOOLSIZE,
@@ -7,7 +8,6 @@ from phospho_backend.core.config import (
     MONGODB_NAME,
     MONGODB_URL,
 )
-from motor.motor_asyncio import AsyncIOMotorClient
 
 mongo_db = None
 

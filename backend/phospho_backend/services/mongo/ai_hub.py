@@ -2,28 +2,28 @@
 Interact with the AI Hub service
 """
 
-from fastapi import HTTPException
-import traceback
 import hashlib
+import traceback
 
-from phospho_backend.services.slack import slack_notification
 import httpx
+from fastapi import HTTPException
+from loguru import logger
+from phospho.models import JobResult, ResultType
+from phospho_backend.api.platform.models import ClusteringRequest
 from phospho_backend.api.v2.models import (
-    Model,
-    ModelsResponse,
     Embedding,
     EmbeddingRequest,
+    Model,
+    ModelsResponse,
 )
-from phospho_backend.api.platform.models import ClusteringRequest
 from phospho_backend.core import config
-from phospho_backend.utils import generate_uuid
-from loguru import logger
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.services.mongo.extractor import fetch_stripe_customer_id
-from phospho.models import JobResult, ResultType
+from phospho_backend.services.slack import slack_notification
+from phospho_backend.temporal.pydantic_converter import pydantic_data_converter
+from phospho_backend.utils import generate_uuid
 from temporalio.client import Client, TLSConfig
 from temporalio.exceptions import WorkflowAlreadyStartedError
-from phospho_backend.temporal.pydantic_converter import pydantic_data_converter
 
 
 async def fetch_models(org_id: str | None = None) -> ModelsResponse | None:

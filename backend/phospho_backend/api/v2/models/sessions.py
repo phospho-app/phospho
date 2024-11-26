@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+
 from phospho_backend.db.models import Session
 
 

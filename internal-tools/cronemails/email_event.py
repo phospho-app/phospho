@@ -1,12 +1,11 @@
-import os
 import logging
+import os
 from typing import Callable
-from pydantic import BaseModel, Field
 
-from utils import generate_timestamp
-
-from organizations import fetch_users_from_org
 import resend
+from organizations import fetch_users_from_org
+from pydantic import BaseModel, Field
+from utils import generate_timestamp
 
 logger = logging.getLogger(__name__)
 

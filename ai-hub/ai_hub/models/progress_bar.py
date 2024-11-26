@@ -1,8 +1,8 @@
-from typing import Literal, Optional
-from ai_hub.db.mongo import get_mongo_db
-from ai_hub.core import config
-
 from dataclasses import dataclass
+from typing import Literal, Optional
+
+from ai_hub.core import config
+from ai_hub.db.mongo import get_mongo_db
 
 
 @dataclass

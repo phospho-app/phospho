@@ -2,23 +2,23 @@ import sys
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 from pydantic import ValidationError
 
 from phospho_backend.api.v2.models import (
+    LogError,
     LogEvent,
     LogReply,
     LogRequest,
-    LogError,
 )
+from phospho_backend.core import config
 from phospho_backend.security import (
     authenticate_org_key,
-    verify_propelauth_org_owns_project_id,
     get_quota,
+    verify_propelauth_org_owns_project_id,
 )
-from phospho_backend.services.mongo.emails import send_quota_exceeded_email
-from phospho_backend.core import config
 from phospho_backend.services.log import create_task_and_process_logs
-from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
+from phospho_backend.services.mongo.emails import send_quota_exceeded_email
 
 router = APIRouter(tags=["Logs"])
 

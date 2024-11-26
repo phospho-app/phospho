@@ -1,13 +1,13 @@
+import datetime as dt
+from collections import defaultdict
+from typing import cast
+
+from loguru import logger
+from phospho.models import ProjectDataFilters
 from phospho_backend.api.platform.models import Pagination, Sorting
 from phospho_backend.api.v2.models.projects import UserMetadata
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.services.mongo.query_builder import QueryBuilder
-import datetime as dt
-from typing import cast
-from collections import defaultdict
-from loguru import logger
-
-from phospho.models import ProjectDataFilters
 
 
 async def fetch_users_metadata(

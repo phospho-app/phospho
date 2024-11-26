@@ -1,6 +1,7 @@
 from typing import Literal
-from pydantic import BaseModel, Field
+
 from phospho.models import ProjectDataFilters
+from pydantic import BaseModel, Field
 
 
 class MetadataValueResponse(BaseModel):

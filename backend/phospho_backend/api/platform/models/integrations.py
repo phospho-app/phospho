@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field
-from phospho.models import ProjectDataFilters
 from typing import Literal
+
+from phospho.models import ProjectDataFilters
+from pydantic import BaseModel, Field
 
 
 class DatasetSamplingParameters(BaseModel):

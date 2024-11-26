@@ -10,11 +10,12 @@ export PHOSPHO_PROJECT_ID=your_project_id
 python phospho_test.py
 ```
 """
+from typing import Dict, List
+
 import phospho
 
 # This is the agent to test
 from backend import SantaClausAgent
-from typing import Dict, List
 
 # phospho.config.BASE_URL = "http://localhost:8000/v0"
 phospho_test = phospho.PhosphoTest()

@@ -4,7 +4,6 @@ In preview mode, emails are disabled.
 
 import resend
 from loguru import logger
-
 from phospho_backend.core import config
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.services.mongo.organizations import fetch_users_from_org

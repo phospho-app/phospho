@@ -1,11 +1,10 @@
-from loguru import logger
-from pydantic import BaseModel
-
-from phospho_backend.db.mongo import get_mongo_db
-from opentelemetry.proto.trace.v1.trace_pb2 import TracesData
-from google.protobuf.json_format import MessageToDict
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
+from google.protobuf.json_format import MessageToDict
+from loguru import logger
 from opentelemetry.proto.common.v1.common_pb2 import KeyValue
+from opentelemetry.proto.trace.v1.trace_pb2 import TracesData
+from phospho_backend.db.mongo import get_mongo_db
+from pydantic import BaseModel
 
 
 class StandardSpanModel(BaseModel):

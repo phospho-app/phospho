@@ -1,4 +1,3 @@
-from phospho_backend.services.integrations.opentelemetry import fetch_spans_for_task
 from fastapi import APIRouter, Depends, HTTPException
 from propelauth_fastapi import User  # type: ignore
 
@@ -8,11 +7,12 @@ from phospho_backend.api.platform.models import (
     RemoveEventRequest,
     Task,
     TaskHumanEvalRequest,
-    TaskUpdateRequest,
     TaskSpans,
+    TaskUpdateRequest,
 )
 from phospho_backend.security import verify_if_propelauth_user_can_access_project
 from phospho_backend.security.authentification import propelauth
+from phospho_backend.services.integrations.opentelemetry import fetch_spans_for_task
 from phospho_backend.services.mongo.tasks import (
     add_event_to_task,
     get_task_by_id,

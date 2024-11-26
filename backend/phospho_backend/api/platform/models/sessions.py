@@ -1,6 +1,8 @@
-from pydantic import BaseModel
-from phospho_backend.db.models import EventDefinition
 from typing import Literal
+
+from pydantic import BaseModel
+
+from phospho_backend.db.models import EventDefinition
 
 
 class AddEventRequest(BaseModel):

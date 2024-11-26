@@ -1,7 +1,6 @@
 import base64
 from datetime import datetime
 from typing import List, Optional
-from extractor.core import config
 
 from Crypto import Random
 from Crypto.Cipher import AES
@@ -10,11 +9,12 @@ from langsmith import Client
 from langsmith.schemas import Run
 from loguru import logger
 
-from extractor.models import LogEventForTasks
+from extractor.core import config
 from extractor.db.mongo import get_mongo_db
+from extractor.models import LogEventForTasks
 from extractor.services.connectors.base import BaseConnector
-from extractor.services.projects import get_project_by_id
 from extractor.services.log.tasks import process_logs_for_tasks
+from extractor.services.projects import get_project_by_id
 
 
 class LangsmithConnector(BaseConnector):

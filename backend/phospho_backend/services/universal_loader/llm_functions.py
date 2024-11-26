@@ -1,11 +1,11 @@
+import pandas as pd  # type: ignore
+from openai import AsyncOpenAI
+from phospho_backend.core import config
 from phospho_backend.services.universal_loader.models import (
     OpenAIDatasetFormat,
     PhosphoDatasetFormat,
     UserAssistant,
 )
-import pandas as pd  # type: ignore
-from phospho_backend.core import config
-from openai import AsyncOpenAI
 
 
 async def openai_converter(df: pd.DataFrame) -> OpenAIDatasetFormat:

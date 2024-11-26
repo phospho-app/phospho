@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
 
 from phospho_backend.api.v2.models import Model, ModelsResponse
-from phospho_backend.services.mongo.ai_hub import fetch_model, fetch_models
 
 # Auth
 from phospho_backend.security.authentification import authenticate_org_key_in_alpha
+from phospho_backend.services.mongo.ai_hub import fetch_model, fetch_models
 
 router = APIRouter(tags=["models"])
 

@@ -1,9 +1,22 @@
 import os
-from collections import defaultdict
 import time
+from collections import defaultdict
 from typing import Dict, List, Literal, Optional, Union
 
+import numpy as np
+import resend
+from loguru import logger
+from openai import AsyncOpenAI
+from phospho.models import ProjectDataFilters, Session, Task
+from sklearn.decomposition import PCA  # type: ignore
+
+from ai_hub.core import config
+from ai_hub.db.mongo import get_mongo_db
+from ai_hub.db.sessions import load_sessions
+from ai_hub.db.tasks import load_tasks
 from ai_hub.db.users import load_users
+from ai_hub.models.clusterings import Cluster, Clustering
+from ai_hub.models.embeddings import Embedding
 from ai_hub.models.progress_bar import ProgressBar
 from ai_hub.models.users import User
 from ai_hub.services.clusters import (
@@ -11,23 +24,10 @@ from ai_hub.services.clusters import (
     generate_clusters_description_title,
     merge_similar_clusters,
 )
-import numpy as np
-import resend
-from loguru import logger
-from openai import AsyncOpenAI
-from sklearn.decomposition import PCA  # type: ignore
-
-from ai_hub.core import config
-from ai_hub.db.mongo import get_mongo_db
-from ai_hub.db.sessions import load_sessions
-from ai_hub.db.tasks import load_tasks
-from ai_hub.models.clusterings import Cluster, Clustering
-from ai_hub.models.embeddings import Embedding
 from ai_hub.services.embeddings import (
     generate_datas_embeddings,
     get_project_embeddings,
 )
-from phospho.models import ProjectDataFilters, Session, Task
 
 openai_client = AsyncOpenAI(api_key=config.OPENAI_API_KEY)
 

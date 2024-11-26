@@ -3,12 +3,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.requests import Request
 from fastapi_simple_rate_limiter import rate_limiter  # type: ignore
 from loguru import logger
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
-
+from phospho_backend.api.v2.models.tak_search import SearchRequest, SearchResponse
 from phospho_backend.core import config
 from phospho_backend.security import authenticate_org_key
-from phospho_backend.api.v2.models.tak_search import SearchRequest, SearchResponse
-from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 router = APIRouter(tags=["tak-search"])
 

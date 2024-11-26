@@ -1,6 +1,5 @@
 import datetime
 
-from phospho_backend.api.platform.models.projects import EmailUsersQuery
 import pandas as pd  # type: ignore
 from fastapi import (
     APIRouter,
@@ -29,6 +28,7 @@ from phospho_backend.api.platform.models import (
     Users,
 )
 from phospho_backend.api.platform.models.explore import Sorting
+from phospho_backend.api.platform.models.projects import EmailUsersQuery
 from phospho_backend.core import config
 from phospho_backend.security.authentification import (
     propelauth,
@@ -47,9 +47,8 @@ from phospho_backend.services.mongo.projects import (
     get_project_by_id,
     update_project,
 )
-
-from phospho_backend.services.mongo.tasks import get_all_tasks
 from phospho_backend.services.mongo.sessions import get_all_sessions
+from phospho_backend.services.mongo.tasks import get_all_tasks
 from phospho_backend.services.mongo.users import (
     fetch_users_metadata,
     get_nb_users_messages,

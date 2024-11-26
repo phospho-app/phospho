@@ -17,7 +17,7 @@ from temporalio.worker import (
 )
 
 with workflow.unsafe.imports_passed_through():
-    from sentry_sdk import capture_exception, set_context, set_tag, isolation_scope
+    from sentry_sdk import capture_exception, isolation_scope, set_context, set_tag
 
 
 def _set_common_workflow_tags(info: Union[workflow.Info, activity.Info]):

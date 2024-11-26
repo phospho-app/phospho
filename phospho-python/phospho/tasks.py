@@ -1,6 +1,6 @@
-from phospho.collection import Collection
+from typing import Dict, List, Literal, Optional
 
-from typing import Dict, Literal, Optional, List
+from phospho.collection import Collection
 from phospho.models import Task
 
 

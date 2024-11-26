@@ -1,7 +1,7 @@
+from phospho.models import ProjectDataFilters
 from pydantic import BaseModel, Field
 
 from phospho_backend.db.models import EventDefinition
-from phospho.models import ProjectDataFilters
 
 
 class OnboardingSurvey(BaseModel):

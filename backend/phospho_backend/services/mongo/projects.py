@@ -4,6 +4,15 @@ from typing import Literal
 
 import pandas as pd  # type: ignore
 import resend
+from fastapi import HTTPException
+from loguru import logger
+from phospho.models import (
+    Cluster,
+    Clustering,
+    EventDefinition,
+    ProjectDataFilters,
+    Threshold,
+)
 from phospho_backend.api.v2.models.embeddings import Embedding
 from phospho_backend.core import config
 from phospho_backend.db.models import (
@@ -15,24 +24,16 @@ from phospho_backend.db.models import (
 )
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.security.authentification import propelauth
+from phospho_backend.services.mongo.sessions import get_all_sessions
 from phospho_backend.services.mongo.tasks import (
     fetch_flattened_tasks,
     get_all_tasks,
     label_sentiment_analysis,
 )
-
 from phospho_backend.services.mongo.users import fetch_users_metadata
-from phospho.models import ProjectDataFilters
-
-
-from phospho_backend.services.mongo.sessions import get_all_sessions
 from phospho_backend.services.slack import slack_notification
 from phospho_backend.utils import generate_timestamp, generate_uuid
-from fastapi import HTTPException
-from loguru import logger
 from propelauth_fastapi import User  # type: ignore
-
-from phospho.models import Cluster, Clustering, EventDefinition, Threshold
 
 
 async def get_project_by_id(project_id: str) -> Project:

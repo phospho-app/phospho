@@ -4,6 +4,14 @@ import os
 
 import aiohealthcheck  # type: ignore
 import sentry_sdk
+from loguru import logger
+from temporalio.client import Client, TLSConfig
+from temporalio.worker import Worker
+from temporalio.worker.workflow_sandbox import (
+    SandboxedWorkflowRunner,
+    SandboxRestrictions,
+)
+
 from extractor.core import config
 from extractor.db.mongo import close_mongo_db, connect_and_init_db
 from extractor.sentry.interceptor import SentryInterceptor
@@ -24,17 +32,10 @@ from extractor.temporal.workflows import (
     ExtractLangSmithDataWorkflow,
     RunMainPipelineOnMessagesWorkflow,
     RunMainPipelineOnTaskWorkflow,
+    RunProcessLogsForMessagesWorkflow,
     RunProcessLogsForTasksWorkflow,
     RunProcessTasksWorkflow,
     RunRecipeOnTaskWorkflow,
-    RunProcessLogsForMessagesWorkflow,
-)
-from loguru import logger
-from temporalio.client import Client, TLSConfig
-from temporalio.worker import Worker
-from temporalio.worker.workflow_sandbox import (
-    SandboxedWorkflowRunner,
-    SandboxRestrictions,
 )
 
 logger.info("Starting worker")

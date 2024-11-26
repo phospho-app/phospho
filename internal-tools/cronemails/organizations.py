@@ -1,4 +1,5 @@
 import os
+
 from propelauth_py import init_base_auth
 
 auth = init_base_auth(

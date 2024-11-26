@@ -9,6 +9,8 @@ from typing import Any, Literal, cast
 
 import pandas as pd  # type: ignore
 import pydantic
+from loguru import logger
+from phospho.models import Event, ProjectDataFilters
 from phospho_backend.api.platform.models import ABTest
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.services.mongo.clustering import (
@@ -22,7 +24,6 @@ from phospho_backend.services.mongo.tasks import (
     get_total_nb_of_tasks,
 )
 from phospho_backend.utils import generate_timestamp, get_last_week_timestamps
-from loguru import logger
 from sklearn.metrics import (  # type: ignore
     f1_score,
     precision_score,
@@ -30,8 +31,6 @@ from sklearn.metrics import (  # type: ignore
     recall_score,
     root_mean_squared_error,
 )
-
-from phospho.models import Event, ProjectDataFilters
 
 
 async def project_has_tasks(project_id: str) -> bool:

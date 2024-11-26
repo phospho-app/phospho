@@ -1,3 +1,15 @@
+import argilla as rg  # type: ignore
+import pandas as pd
+from argilla import FeedbackDataset
+from loguru import logger
+from phospho.models import Event
+from phospho_backend.api.platform.models.integrations import (
+    DatasetCreationRequest,
+    DatasetPullRequest,
+    DatasetSamplingParameters,
+)
+from phospho_backend.core import config
+from phospho_backend.db.models import Task
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.services.mongo.events import (
     change_label_event,
@@ -7,23 +19,9 @@ from phospho_backend.services.mongo.events import (
     get_last_event_for_task,
     remove_event,
 )
-import argilla as rg  # type: ignore
-import pandas as pd
-from phospho_backend.api.platform.models.integrations import (
-    DatasetCreationRequest,
-    DatasetPullRequest,
-    DatasetSamplingParameters,
-)
 from phospho_backend.services.mongo.projects import get_project_by_id
-from loguru import logger
-from phospho_backend.core import config
-from argilla import FeedbackDataset
-from phospho_backend.utils import health_check
-from phospho_backend.db.models import Task
 from phospho_backend.services.mongo.tasks import get_all_tasks
-from phospho_backend.utils import generate_valid_name
-
-from phospho.models import Event
+from phospho_backend.utils import generate_valid_name, health_check
 
 # Connect to argilla
 try:

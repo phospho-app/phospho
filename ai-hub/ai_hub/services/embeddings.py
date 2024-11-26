@@ -1,23 +1,22 @@
+from typing import Dict, List, Literal, Optional, Tuple, Union, cast
+
+from loguru import logger
+from openai import AsyncOpenAI
+from openai.types import Embedding as OpenAIEmbedding
+from phospho import lab
+from phospho.models import Session, Task
+from pydantic import ValidationError
+
+from ai_hub.core import config
+from ai_hub.db.mongo import get_mongo_db
+from ai_hub.models.clusterings import Clustering
+from ai_hub.models.embeddings import Embedding, EmbeddingRequest
 from ai_hub.models.progress_bar import ProgressBar
 from ai_hub.models.users import User
 from ai_hub.services.formatting import format_user_messages
 from ai_hub.services.summaries import (
     generate_intent_summary_phospho_job,
 )
-from loguru import logger
-from openai import AsyncOpenAI
-from typing import Dict, List, Literal, Optional, Tuple, Union, cast
-from openai.types import Embedding as OpenAIEmbedding
-from pydantic import ValidationError
-
-from phospho import lab
-from phospho.models import Task, Session
-
-from ai_hub.core import config
-from ai_hub.models.embeddings import Embedding, EmbeddingRequest
-from ai_hub.db.mongo import get_mongo_db
-from ai_hub.models.clusterings import Clustering
-
 
 openai_client = AsyncOpenAI(api_key=config.OPENAI_API_KEY)
 

@@ -1,7 +1,7 @@
-import streamlit as st
-import requests
-
 from typing import Dict, List
+
+import requests
+import streamlit as st
 
 # Let's do an LLM-powered Santa Claus agent !
 avatars = {"user": "🐸", "assistant": "🎅🏼"}

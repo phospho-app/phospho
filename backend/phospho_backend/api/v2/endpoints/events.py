@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 from phospho_backend.api.v2.models import (
-    EventDetectionReply,
-    DetectEventsInTaskRequest,
-    Task,
     DetectEventInMessagesRequest,
+    DetectEventsInTaskRequest,
+    EventDetectionReply,
+    Task,
 )
 from phospho_backend.security import (
     authenticate_org_key,
@@ -12,8 +13,6 @@ from phospho_backend.security import (
 )
 from phospho_backend.security.authentification import raise_error_if_not_in_pro_tier
 from phospho_backend.services.mongo.extractor import ExtractorClient
-from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
-
 
 router = APIRouter(tags=["Events"])
 

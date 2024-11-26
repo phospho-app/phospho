@@ -6,13 +6,17 @@ Major pytest fixtures (app, db,...) are defined here
 import logging
 import os
 
+import phospho
 import pymongo
 import pytest
+from phospho.models import EventDefinition, Project, ProjectSettings, Task
 from phospho_backend.core import config  # type: ignore
-from phospho_backend.db.mongo import close_mongo_db, connect_and_init_db, get_mongo_db  # type: ignore
+from phospho_backend.db.mongo import (  # type: ignore
+    close_mongo_db,
+    connect_and_init_db,
+    get_mongo_db,
+)
 from phospho_backend.security.authentification import propelauth  # type: ignore
-from phospho.models import Project, Task, ProjectSettings, EventDefinition
-import phospho
 
 # Check that we are not running the tests on the production database
 assert config.ENVIRONMENT != "production"

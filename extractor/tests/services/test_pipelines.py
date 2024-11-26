@@ -1,12 +1,10 @@
 import pytest
 from loguru import logger
-
-from extractor.services.pipelines import MainPipeline
+from tests.utils import cleanup
 
 from extractor.core import config
 from extractor.db.models import Task
-
-from tests.utils import cleanup
+from extractor.services.pipelines import MainPipeline
 
 assert config.ENVIRONMENT != "production"
 

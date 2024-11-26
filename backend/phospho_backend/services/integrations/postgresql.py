@@ -4,6 +4,7 @@ from typing import Literal
 import pandas as pd
 from fastapi import HTTPException
 from loguru import logger
+from phospho.models import FlattenedTask, ProjectDataFilters
 from phospho_backend.api.platform.models import Pagination
 from phospho_backend.core import config, constants
 from phospho_backend.db.mongo import get_mongo_db
@@ -17,8 +18,6 @@ from pydantic import BaseModel, Field
 from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 from tqdm import tqdm
-
-from phospho.models import FlattenedTask, ProjectDataFilters
 
 
 class PostgresqlCredentials(BaseModel, extra="allow"):

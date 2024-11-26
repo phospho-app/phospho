@@ -1,7 +1,8 @@
 from typing import Literal
+
 from phospho_backend.api.v3.models.run import RoleContentMessage
+from phospho_backend.utils import generate_timestamp, generate_uuid
 from pydantic import BaseModel, Field
-from phospho_backend.utils import generate_uuid, generate_timestamp
 
 
 class MinimalLogEventForMessages(BaseModel, extra="allow"):

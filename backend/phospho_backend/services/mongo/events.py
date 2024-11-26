@@ -1,10 +1,9 @@
+from fastapi import HTTPException
+from loguru import logger
+from phospho.models import Event, ProjectDataFilters
 from phospho_backend.db.models import EventDefinition
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.utils import cast_datetime_or_timestamp_to_timestamp
-from fastapi import HTTPException
-from loguru import logger
-
-from phospho.models import Event, ProjectDataFilters
 
 
 async def get_event_definition_from_event_id(

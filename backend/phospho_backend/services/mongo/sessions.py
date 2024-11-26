@@ -1,15 +1,14 @@
 from typing import Literal, cast
 
+from fastapi import HTTPException
+from loguru import logger
+from phospho.lab.language_models import get_provider_and_model, get_sync_client
+from phospho.models import ProjectDataFilters, ScoreRange
+from phospho.utils import is_jsonable
 from phospho_backend.api.platform.models.explore import Pagination, Sorting
 from phospho_backend.db.models import Event, EventDefinition, Session, Task
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.services.mongo.query_builder import QueryBuilder
-from fastapi import HTTPException
-from loguru import logger
-
-from phospho.models import ProjectDataFilters, ScoreRange
-from phospho.utils import is_jsonable
-from phospho.lab.language_models import get_provider_and_model, get_sync_client
 
 
 async def create_session(

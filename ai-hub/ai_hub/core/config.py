@@ -1,9 +1,8 @@
 import os
-from dotenv import load_dotenv
 from base64 import b64decode
 
+from dotenv import load_dotenv
 from loguru import logger
-
 
 load_dotenv()  # take environment variables from .env.
 

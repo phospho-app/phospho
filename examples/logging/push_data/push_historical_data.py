@@ -1,8 +1,8 @@
 """
 Example script to push historical data to Phospho
 """
-import phospho
 import pandas as pd
+import phospho
 from dotenv import load_dotenv
 
 load_dotenv()

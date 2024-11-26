@@ -3,13 +3,16 @@ from typing import cast
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
+from phospho.utils import generate_version_id
 from propelauth_fastapi import User  # type: ignore
 
 from phospho_backend.api.platform.models import (
     ABTests,
+    AggregatedSessionsRequest,
     AggregateMetricsRequest,
     Cluster,
     Clustering,
+    ClusteringCostRequest,
     ClusteringRequest,
     Clusterings,
     Clusters,
@@ -18,8 +21,6 @@ from phospho_backend.api.platform.models import (
     Events,
     FetchClustersRequest,
     ProjectDataFilters,
-    AggregatedSessionsRequest,
-    ClusteringCostRequest,
 )
 from phospho_backend.api.platform.models.explore import (
     ABTestVersions,
@@ -30,16 +31,16 @@ from phospho_backend.security import verify_if_propelauth_user_can_access_projec
 from phospho_backend.security.authentification import propelauth
 from phospho_backend.security.authorization import get_quota_for_org
 from phospho_backend.services.mongo.ai_hub import AIHubClient
+from phospho_backend.services.mongo.clustering import (
+    compute_cloud_of_clusters,
+    fetch_all_clusterings,
+    fetch_all_clusters,
+    fetch_single_cluster,
+    get_clustering_by_id,
+)
 from phospho_backend.services.mongo.events import (
     get_all_events,
     get_event_definition_from_event_id,
-)
-from phospho_backend.services.mongo.clustering import (
-    fetch_all_clusterings,
-    fetch_all_clusters,
-    get_clustering_by_id,
-    fetch_single_cluster,
-    compute_cloud_of_clusters,
 )
 from phospho_backend.services.mongo.explore import (
     create_ab_tests_table,
@@ -58,11 +59,10 @@ from phospho_backend.services.mongo.explore import (
 from phospho_backend.services.mongo.tasks import get_total_nb_of_tasks
 from phospho_backend.services.mongo.users import (
     get_nb_users_messages,
-    get_users_aggregated_metrics,
     get_total_nb_of_users,
+    get_users_aggregated_metrics,
 )
 from phospho_backend.utils import generate_uuid
-from phospho.utils import generate_version_id
 
 router = APIRouter(tags=["Explore"])
 

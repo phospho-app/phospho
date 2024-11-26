@@ -1,11 +1,11 @@
 from typing import Literal
 
+from fastapi import HTTPException
+from loguru import logger
 from phospho_backend.api.platform.models.metadata import MetadataPivotQuery
 from phospho_backend.core import constants
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.services.mongo.query_builder import QueryBuilder
-from fastapi import HTTPException
-from loguru import logger
 
 
 async def _build_unique_metadata_fields_pipeline(

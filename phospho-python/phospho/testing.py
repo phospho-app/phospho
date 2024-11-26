@@ -4,12 +4,12 @@ import time
 from random import sample
 from typing import Any, Callable, Dict, Iterator, List, Literal, Optional
 
-from phospho.utils import generate_version_id
 from pydantic import BaseModel, Field
 from rich import print
 
 from phospho import lab
 from phospho.client import Client
+from phospho.utils import generate_version_id
 
 logger = logging.getLogger(__name__)
 

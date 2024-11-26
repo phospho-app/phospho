@@ -2,9 +2,9 @@ from typing import Optional
 
 from google.cloud import language_v2
 from loguru import logger
+from phospho.models import SentimentObject
 
 from extractor.core.config import GCP_ASYNC_SENTIMENT_CLIENT
-from phospho.models import SentimentObject
 
 
 async def call_sentiment_and_language_api(

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 from phospho_backend.api.v2.models import (
     FlattenedTasks,
@@ -17,7 +18,6 @@ from phospho_backend.services.mongo.tasks import (
     get_all_tasks,
     update_from_flattened_tasks,
 )
-from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 router = APIRouter(tags=["Projects"])
 

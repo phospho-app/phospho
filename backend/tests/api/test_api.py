@@ -1,9 +1,9 @@
 import phospho_backend.core.config as config
+import pymongo
+from fastapi.testclient import TestClient
 from phospho_backend.api.v2.models import Project
 from phospho_backend.main import app as router
 from phospho_backend.utils import generate_uuid
-from fastapi.testclient import TestClient
-import pymongo
 
 assert config.ENVIRONMENT != "production"
 

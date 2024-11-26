@@ -1,5 +1,9 @@
 from typing import Any
 
+from loguru import logger
+from phospho.lab.utils import get_tokenizer, num_tokens_from_messages
+from phospho.models import HumanEval, Session, Task
+from phospho.utils import filter_nonjsonable_keys, is_jsonable
 from phospho_backend.api.v2.models import LogEvent
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.services.mongo.extractor import ExtractorClient
@@ -7,11 +11,6 @@ from phospho_backend.services.mongo.projects import (
     project_check_automatic_analytics_monthly_limit,
 )
 from phospho_backend.utils import generate_timestamp, generate_uuid
-from loguru import logger
-
-from phospho.lab.utils import get_tokenizer, num_tokens_from_messages
-from phospho.models import HumanEval, Session, Task
-from phospho.utils import filter_nonjsonable_keys, is_jsonable
 
 
 async def create_task_and_process_logs(

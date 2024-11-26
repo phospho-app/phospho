@@ -1,14 +1,13 @@
 import logging
 from typing import Dict, List, Optional, Union
 
-from opentelemetry.context import Context
-from opentelemetry.sdk.trace import Span
-from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry import trace
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.context import Context
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import Span, TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter
+
 from phospho.client import Client
 
 logger = logging.getLogger(__name__)

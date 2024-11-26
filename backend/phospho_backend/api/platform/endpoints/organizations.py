@@ -1,10 +1,11 @@
 from typing import Any
 
-from phospho_backend.api.platform.models.organizations import BillingStatsRequest
 import stripe
 from customerio import analytics  # type: ignore
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request
 from loguru import logger
+from phospho.models import UsageQuota
+from phospho.utils import generate_version_id
 from propelauth_fastapi import User  # type: ignore
 
 from phospho_backend.api.platform.models import (
@@ -15,6 +16,7 @@ from phospho_backend.api.platform.models import (
     Projects,
     UserCreatedEventWebhook,
 )
+from phospho_backend.api.platform.models.organizations import BillingStatsRequest
 from phospho_backend.core import config
 from phospho_backend.security.authentification import propelauth
 from phospho_backend.services.mongo.emails import (
@@ -29,12 +31,10 @@ from phospho_backend.services.mongo.organizations import (
     get_usage_quota,
 )
 from phospho_backend.services.mongo.projects import (
-    get_project_by_id,
     copy_template_project_to_new,
+    get_project_by_id,
 )
 from phospho_backend.services.slack import slack_notification
-from phospho.models import UsageQuota
-from phospho.utils import generate_version_id
 
 router = APIRouter(tags=["Organizations"])
 

@@ -1,9 +1,8 @@
-from phospho_backend.api.platform.models.explore import ClusteringEmbeddingCloud
-from phospho_backend.db.mongo import get_mongo_db
 from fastapi import HTTPException
 from loguru import logger
-
 from phospho.models import Cluster, Clustering
+from phospho_backend.api.platform.models.explore import ClusteringEmbeddingCloud
+from phospho_backend.db.mongo import get_mongo_db
 
 
 async def rename_clustering(project_id: str, clustering_id: str, new_name: str):

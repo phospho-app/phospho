@@ -1,16 +1,18 @@
-from typing import List, Dict, Any, Literal, Tuple, Optional
+from typing import Any, Dict, List, Literal, Optional, Tuple
+
+from loguru import logger
+from phospho.models import Session, Task
+
+from extractor.db.mongo import get_mongo_db
+from extractor.models import LogEventForTasks
 from extractor.models.log import MinimalLogEventForMessages
 from extractor.models.pipelines import RoleContentMessage
-from extractor.services.pipelines import MainPipeline
-from extractor.models import LogEventForTasks
-from phospho.models import Task, Session
 from extractor.services.log.base import (
+    collect_metadata,
     convert_additional_data_to_dict,
     get_time_created_at,
-    collect_metadata,
 )
-from loguru import logger
-from extractor.db.mongo import get_mongo_db
+from extractor.services.pipelines import MainPipeline
 from extractor.services.tasks import compute_task_position
 from extractor.utils import generate_uuid
 

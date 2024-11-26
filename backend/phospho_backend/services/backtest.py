@@ -1,9 +1,10 @@
 from collections.abc import Iterator
+
+import phospho
+from loguru import logger
+from phospho_backend.api.v2.models import LogEvent
 from phospho_backend.services.mongo.extractor import ExtractorClient
 from phospho_backend.services.mongo.tasks import get_all_tasks
-from loguru import logger
-import phospho
-from phospho_backend.api.v2.models import LogEvent
 
 
 class BacktestLoader:

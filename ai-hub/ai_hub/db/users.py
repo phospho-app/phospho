@@ -1,12 +1,12 @@
 from typing import Dict, List, Optional
-from ai_hub.models.clusterings import Clustering
-from ai_hub.models.users import User
+
 from loguru import logger
 from phospho.models import ProjectDataFilters
+from phospho_backend.services.mongo.query_builder import QueryBuilder
 
 from ai_hub.db.mongo import get_mongo_db
-
-from phospho_backend.services.mongo.query_builder import QueryBuilder
+from ai_hub.models.clusterings import Clustering
+from ai_hub.models.users import User
 
 
 async def load_users(

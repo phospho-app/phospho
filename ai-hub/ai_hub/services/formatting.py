@@ -1,12 +1,13 @@
 from typing import List, Optional
 
-from ai_hub.db.sessions import load_sessions
-from ai_hub.models.users import User
-from ai_hub.services.summaries import generate_intent_summary_phospho_job
 from loguru import logger
 from phospho import lab
 from phospho.lab import Message
-from phospho.models import Session, ProjectDataFilters
+from phospho.models import ProjectDataFilters, Session
+
+from ai_hub.db.sessions import load_sessions
+from ai_hub.models.users import User
+from ai_hub.services.summaries import generate_intent_summary_phospho_job
 
 
 async def format_user_messages(

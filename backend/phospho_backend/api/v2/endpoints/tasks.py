@@ -1,13 +1,15 @@
 import asyncio
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from loguru import logger
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 from phospho_backend.api.v2.models import (
     Task,
     TaskCreationRequest,
     TaskFlagRequest,
-    TaskUpdateRequest,
     TaskHumanEvalRequest,
+    TaskUpdateRequest,
 )
 from phospho_backend.core import config
 from phospho_backend.security.authentification import (
@@ -20,12 +22,9 @@ from phospho_backend.services.mongo.sessions import get_session_by_id
 from phospho_backend.services.mongo.tasks import (
     create_task,
     get_task_by_id,
-    update_task,
     human_eval_task,
+    update_task,
 )
-from loguru import logger
-from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
-
 
 router = APIRouter(tags=["Tasks"])
 

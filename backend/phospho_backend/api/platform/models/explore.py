@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field
 from typing import Literal, cast
+
 from phospho.models import ProjectDataFilters
+from pydantic import BaseModel, Field
 
 
 class AggregateMetricsRequest(BaseModel):

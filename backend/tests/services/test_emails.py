@@ -1,9 +1,8 @@
 import pytest
-
 from phospho_backend.services.mongo.emails import (
     send_email,
-    send_welcome_email,
     send_quota_exceeded_email,
+    send_welcome_email,
 )
 
 

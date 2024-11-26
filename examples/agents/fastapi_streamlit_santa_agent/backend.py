@@ -1,18 +1,15 @@
-import phospho
 import asyncio
 import os
 import random
+from typing import Any, AsyncGenerator, Dict, List
+
+import phospho
 import pydantic
-
 from dotenv import load_dotenv
-
-
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from openai import AsyncOpenAI, OpenAIError
 from openai.types.chat import ChatCompletionChunk
-
-from fastapi import FastAPI, HTTPException, Depends
-from fastapi.responses import StreamingResponse
-from typing import Dict, List, Any, AsyncGenerator
 
 # This is an example implementation of a FastAPI backend of an LLM app,
 # where interactions are logged with phospho

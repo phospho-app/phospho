@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+
 from phospho_backend.db.models import EventDefinition
 from phospho_backend.services.integrations.opentelemetry import StandardSpanModel
 

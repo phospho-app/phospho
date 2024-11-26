@@ -1,6 +1,6 @@
-from phospho.models import Task, Session, SessionStats
-from phospho_backend.utils import generate_uuid, get_most_common
 from loguru import logger
+from phospho.models import Session, SessionStats, Task
+from phospho_backend.utils import generate_uuid, get_most_common
 
 
 def aggregate_tasks_into_sessions(tasks: list[Task], project_id: str) -> list[Session]:

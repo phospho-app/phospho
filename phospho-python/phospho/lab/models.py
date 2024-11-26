@@ -5,14 +5,14 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, Field
 
 from phospho.models import (
-    ScoreRangeSettings,
     DetectionScope,
-    Message,  # noqa: F401
-    ResultType,  # noqa: F401
-    JobResult,  # noqa: F401
     EventDefinition,  # noqa: F401
+    JobResult,  # noqa: F401
+    Message,  # noqa: F401
     Project,  # noqa: F401
     Recipe,  # noqa: F401
+    ResultType,  # noqa: F401
+    ScoreRangeSettings,
 )
 
 from .utils import get_literal_values

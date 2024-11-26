@@ -15,26 +15,28 @@ To consider:
 
 import traceback
 from datetime import timedelta
+
 from temporalio import workflow
 from temporalio.common import RetryPolicy
 
 with workflow.unsafe.imports_passed_through():
-    import stripe
     import asyncio
-    import httpx
     import threading
+
+    import httpx
     import sentry_sdk
     import sniffio
-    from loguru import logger
+    import stripe
     from ai_hub.core import config
-    from ai_hub.temporal.activities import (
-        generate_clustering,
-        create_embeddings,
-        bill_on_stripe,
-    )
-    from ai_hub.models.embeddings import EmbeddingRequest
     from ai_hub.models.clusterings import ClusteringRequest
+    from ai_hub.models.embeddings import EmbeddingRequest
     from ai_hub.models.stripe import BillOnStripeRequest
+    from ai_hub.temporal.activities import (
+        bill_on_stripe,
+        create_embeddings,
+        generate_clustering,
+    )
+    from loguru import logger
 
 
 class BaseWorkflow:

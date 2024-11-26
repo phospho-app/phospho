@@ -1,6 +1,8 @@
-from pydantic import BaseModel, Field
 from typing import Literal
-from phospho_backend.utils import generate_uuid, generate_timestamp
+
+from pydantic import BaseModel, Field
+
+from phospho_backend.utils import generate_timestamp, generate_uuid
 
 
 class MinimalLogEvent(BaseModel, extra="allow"):

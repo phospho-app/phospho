@@ -1,5 +1,8 @@
 from typing import Optional
 
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from loguru import logger
+from opentelemetry.proto.trace.v1.trace_pb2 import TracesData  # type: ignore
 from phospho_backend.api.v3.models.log import (
     LogError,
     LogReply,
@@ -15,9 +18,6 @@ from phospho_backend.security.authorization import get_quota_for_org
 from phospho_backend.services.integrations.opentelemetry import OpenTelemetryConnector
 from phospho_backend.services.mongo.emails import send_quota_exceeded_email
 from phospho_backend.services.mongo.extractor import ExtractorClient
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
-from loguru import logger
-from opentelemetry.proto.trace.v1.trace_pb2 import TracesData  # type: ignore
 from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 router = APIRouter(tags=["Log"])

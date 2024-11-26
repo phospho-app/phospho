@@ -1,12 +1,12 @@
 from typing import List, Optional
-from phospho.models import Session, ProjectDataFilters
 
-from ai_hub.models.clusterings import Clustering
-from ai_hub.db.mongo import get_mongo_db
-from ai_hub.core import config
 from loguru import logger
-
+from phospho.models import ProjectDataFilters, Session
 from phospho_backend.services.mongo.query_builder import QueryBuilder
+
+from ai_hub.core import config
+from ai_hub.db.mongo import get_mongo_db
+from ai_hub.models.clusterings import Clustering
 
 
 async def load_sessions(

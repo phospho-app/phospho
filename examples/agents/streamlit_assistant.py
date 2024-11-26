@@ -18,12 +18,11 @@ streamlit run webapp.py
 
 """
 
-import streamlit as st
 import phospho
+import streamlit as st
 from openai import OpenAI
-from openai.types.chat import ChatCompletionChunk
 from openai._streaming import Stream
-
+from openai.types.chat import ChatCompletionChunk
 
 st.title("Assistant")  # Let's do an LLM-powered assistant !
 

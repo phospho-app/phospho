@@ -1,18 +1,16 @@
 from collections import defaultdict
 from typing import Literal, cast
-from phospho_backend.api.platform.models.explore import Pagination, Sorting
-from phospho_backend.services.mongo.query_builder import QueryBuilder
-from phospho.models import FlattenedTask, ProjectDataFilters, ScoreRange, HumanEval
-from phospho.utils import filter_nonjsonable_keys
 
 import pydantic
-from phospho_backend.db.models import Eval, EventDefinition, Task, Event
-from phospho_backend.db.mongo import get_mongo_db
 from fastapi import HTTPException
-
-from phospho_backend.utils import generate_uuid
-
 from loguru import logger
+from phospho.models import FlattenedTask, HumanEval, ProjectDataFilters, ScoreRange
+from phospho.utils import filter_nonjsonable_keys
+from phospho_backend.api.platform.models.explore import Pagination, Sorting
+from phospho_backend.db.models import Eval, Event, EventDefinition, Task
+from phospho_backend.db.mongo import get_mongo_db
+from phospho_backend.services.mongo.query_builder import QueryBuilder
+from phospho_backend.utils import generate_uuid
 from pymongo import InsertOne, UpdateOne
 
 

@@ -4,20 +4,19 @@ import traceback
 
 import httpx
 import stripe
+from loguru import logger
+from phospho.models import PipelineResults, Recipe, Task
 from phospho_backend.api.v2.models import LogEvent
 from phospho_backend.api.v3.models import MinimalLogEventForMessages
+from phospho_backend.api.v3.models.run import RoleContentMessage
 from phospho_backend.core import config
 from phospho_backend.security import propelauth
 from phospho_backend.services.mongo.organizations import get_usage_quota
 from phospho_backend.services.slack import slack_notification
 from phospho_backend.temporal.pydantic_converter import pydantic_data_converter
 from phospho_backend.utils import generate_uuid
-from loguru import logger
 from temporalio.client import Client, TLSConfig
 from temporalio.exceptions import WorkflowAlreadyStartedError
-
-from phospho.models import PipelineResults, Recipe, Task
-from phospho_backend.api.v3.models.run import RoleContentMessage
 
 
 async def bill_on_stripe(

@@ -7,11 +7,9 @@ import os
 from base64 import b64decode
 
 from dotenv import load_dotenv
-from google.oauth2 import service_account
 from google.cloud.storage import Client  # type: ignore
-
+from google.oauth2 import service_account
 from loguru import logger
-
 
 load_dotenv()  # take environment variables from .env.
 logger.info("Loading environment variables from .env file")

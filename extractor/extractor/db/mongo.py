@@ -1,13 +1,12 @@
-from motor.motor_asyncio import AsyncIOMotorClient
 from loguru import logger
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from extractor.core.config import (
-    MONGODB_URL,
-    MONGODB_NAME,
     MONGODB_MAXPOOLSIZE,
     MONGODB_MINPOOLSIZE,
+    MONGODB_NAME,
+    MONGODB_URL,
 )
-
 
 mongo_db = None
 

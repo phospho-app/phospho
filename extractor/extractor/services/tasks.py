@@ -1,8 +1,10 @@
 from typing import Dict, Optional
-from extractor.db.mongo import get_mongo_db
-from extractor.db.models import Task
+
 from langdetect import detect  # type: ignore
 from loguru import logger
+
+from extractor.db.models import Task
+from extractor.db.mongo import get_mongo_db
 
 
 async def get_task_by_id(task_id: str) -> Task:

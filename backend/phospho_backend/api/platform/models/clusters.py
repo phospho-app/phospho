@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field
 from typing import Literal
+
 from phospho.models import Cluster, Clustering, ProjectDataFilters
+from pydantic import BaseModel, Field
 
 
 class Clusters(BaseModel):
