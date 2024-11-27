@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd extractor
-          poetry install --with dev --no-interaction --no-root
+          poetry install --no-interaction --no-root
           pip install mypy pydantic[mypy]
 
       - name: Get changed Python files
@@ -45,4 +45,3 @@ jobs:
       - name: Run mypy on changed files
         if: steps.changed-files.outputs.any_changed == 'true'
         run: mypy ${{ steps.changed-files.outputs.all_changed_files }} --ignore-missing-imports --follow-imports=silent || exit 1
-          

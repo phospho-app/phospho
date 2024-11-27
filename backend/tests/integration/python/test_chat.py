@@ -2,8 +2,8 @@
 This agent is called by the CICD after deploying to staging.
 """
 
-import requests  # type: ignore
 import openai
+import requests  # type: ignore
 
 
 def test_chat(backend_url, org_id, access_token, api_key):

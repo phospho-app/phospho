@@ -33,7 +33,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd backend
-          poetry install --with dev --no-interaction --no-root
+          poetry install --no-interaction --no-root
           pip install mypy pydantic[mypy]
 
       - name: Get changed Python files
@@ -80,7 +80,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd backend
-          poetry install --with dev --no-interaction --no-root
+          poetry install --no-interaction --no-root
 
       - name: Test with pytest
         env:
@@ -102,7 +102,6 @@ jobs:
           PHOSPHO_API_KEY_ONBOARDING: ${{ secrets.PHOSPHO_API_KEY_ONBOARDING }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-          EXTRACTOR_URL: ${{ vars.EXTRACTOR_URL }}
           ANYSCALE_API_KEY: ${{ secrets.ANYSCALE_API_KEY }}
           PHOSPHO_AI_HUB_URL: ${{ vars.PHOSPHO_AI_HUB_URL }}
           PHOSPHO_AI_HUB_API_KEY: ${{ secrets.PHOSPHO_AI_HUB_API_KEY }}

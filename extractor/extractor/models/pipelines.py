@@ -1,8 +1,9 @@
-from pydantic import BaseModel
 from typing import List, Optional
 
-from extractor.db.models import Task, Recipe
-from phospho.models import SentimentObject, PipelineResults  # noqa: F401
+from phospho.models import PipelineResults, SentimentObject  # noqa: F401
+from pydantic import BaseModel
+
+from extractor.db.models import Recipe, Task
 
 
 class RoleContentMessage(BaseModel):

@@ -1,10 +1,9 @@
 import os
 
 import resend
-from loguru import logger
-from propelauth_fastapi import init_auth
-
 from dotenv import load_dotenv
+from loguru import logger
+from propelauth_fastapi import init_auth  # type: ignore
 from tqdm import tqdm
 
 load_dotenv()
@@ -57,8 +56,8 @@ logger.info(f"Number of users: {len(total_users)}")
 # Set the resend API key
 resend.api_key = os.environ["RESEND_API_KEY"]
 
-existing_emails = resend.Contacts.list(os.environ["RESEND_AUDIENCE_ID"])
-existing_emails = [user["email"] for user in existing_emails.get("data", [])]
+emails_list = resend.Contacts.list(os.environ["RESEND_AUDIENCE_ID"])
+existing_emails = [user["email"] for user in emails_list.get("data", [])]
 
 # Remove all existing contacts from the list of users
 total_users = [user for user in total_users if user["email"] not in existing_emails]

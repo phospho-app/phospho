@@ -89,3 +89,38 @@ _With love and baguettes from Paris, the phospho team 🥖💚_
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=phospho-app/phospho&type=Date)](https://star-history.com/#phospho-app/phospho&Date)
+
+## Installation
+
+### Requirements
+
+This project uses Poetry, Python3.11+ and Node/npm/NextJS for the frontend.
+
+1. **Create a Virtual Environment and install dependencies**  
+   Run the following commands to create a virtual environment and install dependencies
+   phospho depends on different services which you need to install dependencies for
+
+```bash
+# 1 - Start at the root of the project and create a virtual environment
+python -m venv .venv
+# 2 - Install dependencies following with backend
+cd ../backend
+poetry install
+# 3 - Install dependencies following with extractor
+cd ../extractor
+poetry install
+# 4 - Install dependencies following up with ai-hub
+cd ../ai-hub
+poetry install
+# 5 - Finish up by installing the frontend in /platform
+cd ../platform
+npm i # You might need to install Node and npm for this step
+```
+
+2. **Run the phospho Platform**
+   To run the phospho platform locally, you will need to run these 4 services:
+
+   - **Backend**: More information in `README.md`
+   - **AI Hub**: More information in `README.md`
+   - **Extractor**: More information in `README.md` 
+   - **Frontend**: More information in `README.md`

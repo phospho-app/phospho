@@ -4,7 +4,7 @@ This is a React webapp
 
 ## Env
 
-Create a `.env` in the root folder
+Create a `.env` in this folder `platform` :
 
 ```bash
 GCP_PROJECT_ID=portal-385519
@@ -37,11 +37,15 @@ PROPELAUTH_VERIFIER_KEY=-----BEGIN PUBLIC KEY-----
 
 Using Node 20.17
 
+Install the depedencies of the app with:
+
 ```
 npm i
 ```
 
 ## Getting Started
+
+Launch the platform server with:
 
 ```bash
 npm run dev

@@ -16,49 +16,52 @@ To consider:
 import traceback
 from datetime import timedelta
 from typing import Any, Callable, Type
+
 from temporalio import workflow
 from temporalio.common import RetryPolicy
 
 with workflow.unsafe.imports_passed_through():
-    import stripe
     import asyncio
-    import httpx
     import threading
+
+    import httpx
     import sentry_sdk
+    import stripe
     from loguru import logger
+
     from extractor.core import config
-    from extractor.services.slack import slack_notification
-    from extractor.services.pipelines import MainPipeline
-    from extractor.services.connectors import (
-        LangsmithConnector,
-        LangfuseConnector,
-    )
-    from extractor.services.projects import get_project_by_id
-    from extractor.temporal.activities import (
-        extract_langsmith_data,
-        extract_langfuse_data,
-        run_recipe_on_task,
-        run_process_tasks,
-        run_main_pipeline_on_messages,
-        run_main_pipeline_on_task,
-        bill_on_stripe,
-        run_process_logs_for_tasks,
-        run_process_logs_for_messages,
-    )
     from extractor.models.log import (
         LogProcessRequestForMessages,
-        TaskProcessRequest,
         LogProcessRequestForTasks,
+        TaskProcessRequest,
     )
     from extractor.models.pipelines import (
+        BillOnStripeRequest,
+        ExtractorBaseClass,
         PipelineLangfuseRequest,
         PipelineLangsmithRequest,
         PipelineResults,
         RunMainPipelineOnMessagesRequest,
         RunMainPipelineOnTaskRequest,
         RunRecipeOnTaskRequest,
-        BillOnStripeRequest,
-        ExtractorBaseClass,
+    )
+    from extractor.services.connectors import (
+        LangfuseConnector,
+        LangsmithConnector,
+    )
+    from extractor.services.pipelines import MainPipeline
+    from extractor.services.projects import get_project_by_id
+    from extractor.services.slack import slack_notification
+    from extractor.temporal.activities import (
+        bill_on_stripe,
+        extract_langfuse_data,
+        extract_langsmith_data,
+        run_main_pipeline_on_messages,
+        run_main_pipeline_on_task,
+        run_process_logs_for_messages,
+        run_process_logs_for_tasks,
+        run_process_tasks,
+        run_recipe_on_task,
     )
 
 

@@ -1,6 +1,7 @@
 from loguru import logger
-from extractor.db.mongo import get_mongo_db
+
 from extractor.db.models import Project, Recipe
+from extractor.db.mongo import get_mongo_db
 
 
 async def get_project_by_id(project_id: str) -> Project:

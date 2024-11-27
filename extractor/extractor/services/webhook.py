@@ -1,8 +1,8 @@
 from typing import Optional
 
 import aiohttp
-from loguru import logger
 from aiohttp import ClientTimeout
+from loguru import logger
 
 
 async def trigger_webhook(

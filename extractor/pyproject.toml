@@ -29,10 +29,6 @@ requests = "^2.32.3"
 stripe = "^10.6.0"
 sentry-sdk = "^2.1"
 aiohealthcheck = "^2018.7.1"
-
-[tool.poetry.group.dev]
-optional = true
-[tool.poetry.group.dev.dependencies]
 phospho = { path = "../phospho-python", develop = true, extras = ["lab"] }
 
 

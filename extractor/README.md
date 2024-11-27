@@ -23,7 +23,7 @@ TEMPORAL_NAMESPACE=default
 Install the dependencies if you are running loccaly in dev mode:
 
 ```bash
-poetry install --with dev
+poetry install
 ```
 
 ## Running the worker locally
@@ -43,7 +43,7 @@ TEMPORAL_NAMESPACE=default
 ```
 
 ```bash
-temporal server start-dev --db-filename your_temporal.db --ui-port 8080
+temporal server start-dev --db-filename your_temporal.db --ui-port 7999
 ```
 
 You can now run the worker in a second terminal with
@@ -52,7 +52,7 @@ You can now run the worker in a second terminal with
 poetry run python main.py
 ```
 
-Go to `localhost:8080` to access the UI and monitor the workflows.
+Go to `localhost:7999` to access the UI and monitor the workflows.
 
 **Warning:** You have to put your EXTRACTOR_SECRET_KEY in your backend .env.
 

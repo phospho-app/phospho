@@ -1,8 +1,9 @@
 from typing import Dict, List, Literal, Optional, Union
 
+from pydantic import BaseModel, Field
+
 from extractor.models.pipelines import RoleContentMessage
 from extractor.utils import generate_timestamp, generate_uuid
-from pydantic import BaseModel, Field
 
 
 class TaskProcessRequest(BaseModel):
@@ -54,7 +55,7 @@ class LogEventForTasks(MinimalLogEvent, extra="allow"):
     created_at: Optional[int] = None
     last_update: Optional[int] = None
     # metadata
-    metadata: Optional[Dict[str, object]] = Field(default_factory=dict)
+    metadata: Optional[Dict[str, object]] = Field(default_factory=dict)  # type: ignore
     session_id: Optional[str] = None
     task_id: str = Field(default_factory=generate_uuid)
     step_id: Optional[str] = None

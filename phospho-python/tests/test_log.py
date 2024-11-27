@@ -1,13 +1,13 @@
-import pytest
-import phospho
 import logging
 import time
 
-from openai.types.chat import ChatCompletion, ChatCompletionMessage, ChatCompletionChunk
-from openai.types.completion_usage import CompletionUsage
+import phospho
+import pytest
+from openai.types.chat import ChatCompletion, ChatCompletionChunk, ChatCompletionMessage
 from openai.types.chat.chat_completion import Choice
-from openai.types.chat.chat_completion_chunk import ChoiceDelta
 from openai.types.chat.chat_completion_chunk import Choice as chunk_Choice
+from openai.types.chat.chat_completion_chunk import ChoiceDelta
+from openai.types.completion_usage import CompletionUsage
 
 logger = logging.getLogger(__name__)
 

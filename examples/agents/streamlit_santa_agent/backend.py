@@ -3,12 +3,11 @@ import random
 import time
 from typing import Any, Dict, Generator, List, Optional
 
+import phospho
 import streamlit as st
 from openai import OpenAI
 from openai._streaming import Stream
 from openai.types.chat import ChatCompletionChunk
-
-import phospho
 
 
 class SantaClausAgent:

@@ -2,10 +2,10 @@
 This script is meant to be run in local environment to populate the local test database with test data.
 """
 
-import phospho
 import datetime
 import random
 
+import phospho
 from dotenv import load_dotenv
 from tqdm import tqdm
 

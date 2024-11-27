@@ -1,7 +1,7 @@
-import phospho
-import openai
+from typing import Any, Dict, Tuple
 
-from typing import Tuple, Dict, Any
+import openai
+import phospho
 
 phospho.init()
 openai_client = openai.OpenAI()
