@@ -78,22 +78,31 @@ We welcome contributions from the community. Please refer to our [contributing g
 
 ### Running locally
 
-This project uses Python3.11+ and [NextJS](https://nextjs.org/docs). To work on it locally, create a python virtual environment.
+This project uses Python3.11+ and [NextJS](https://nextjs.org/docs).
 
-Make sure you have properly added `.env` files in `ai-hub`, `extractor`, `backend`, `platform`.
+To work on it locally,
 
-Then, the quickest way to get started is to use the makefile.
+1. Make sure you have properly added `.env` files in `ai-hub`, `extractor`, `backend`, `platform`.
+2. Install the [Temporal CLI](https://temporal.io/setup/install-temporal-cli) `brew install temporal`
+3. Create a python virtual environment.
 
 ```bash
 python -m venv .venv
+source .venv/bin/activate
+```
+
+4. Then, the quickest way to get started is to use the makefile to install and up.
+
+```bash
+# Install dependencies
 make install
 # Launch everything
 make up
 ```
 
-Go to `localhost:3000` to see the platform frontend. The backend documentations are available at `localhost:8000/api/docs`, `localhost:8000/v2/docs` and `localhost:8000/v3/docs`.
+5. Go to `localhost:3000` to see the platform frontend. The backend documentations are available at `localhost:8000/api/docs`, `localhost:8000/v2/docs` and `localhost:8000/v3/docs`.
 
-To stop everything, run:
+6. To stop everything, run:
 
 ```bash
 make stop
