@@ -24,6 +24,43 @@ services:
       - extractor
       - mongodb
 
+  # This is an example on how to run local Temporal server
+  # Refer to this: https://github.com/temporalio/docker-compose
+  # https://hub.docker.com/r/temporalio/auto-setup
+  # postgresql:
+  #   container_name: temporal-postgresql
+  #   environment:
+  #     POSTGRES_PASSWORD: temporal
+  #     POSTGRES_USER: temporal
+  #   image: postgres:12
+  #   networks:
+  #     - app_network
+  #   ports:
+  #     - 5432:5432
+  #   volumes:
+  #     - /var/lib/postgresql/data
+
+  # temporal:
+  #   container_name: temporal
+  #   depends_on:
+  #     - postgresql
+  #   environment:
+  #     - DB=postgres12
+  #     - DB_PORT=5432
+  #     - POSTGRES_USER=temporal
+  #     - POSTGRES_PWD=temporal
+  #     - POSTGRES_SEEDS=postgresql
+  #     - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/temporal-dynamic-config.yaml
+  #     - DEFAULT_NAMESPACE=default
+  #   image: temporalio/auto-setup
+  #   networks:
+  #     - app_network
+  #   ports:
+  #     - "7233:7233" #server
+  #     - "7999:7999" #UI
+  #   volumes:
+  #     - ./:/etc/temporal/config/dynamicconfig
+
   extractor:
     build:
       context: ./
@@ -36,6 +73,7 @@ services:
       - app_network
     depends_on:
       - mongodb
+      - temporal
 
   mongodb:
     image: mongo:latest
@@ -57,6 +95,7 @@ services:
     networks:
       - app_network
     depends_on:
+      - temporal
       - backend
       - extractor
       - mongodb
