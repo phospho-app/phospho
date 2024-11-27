@@ -59,7 +59,7 @@ AZURE_OPENAI_ENDPOINT=""
 
 Now you can run the backend server through this command:
 
-```
+```bash
 poetry run uvicorn phospho_backend.main:app --reload
 ```
 
@@ -67,7 +67,7 @@ poetry run uvicorn phospho_backend.main:app --reload
 
 1. Make sure you have setup your environment variables. To load the .env files:
 
-   ```
+   ```bash
    set -o allexport; source .env; set +o allexport
    ```
 
