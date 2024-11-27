@@ -9,8 +9,11 @@ services:
       - app_network
     depends_on:
       - backend
+
   backend:
-    build: ./backend
+    build:
+      context: ./
+      dockerfile: ./backend/Dockerfile
     ports:
       - "80:80"
     env_file:
@@ -20,8 +23,11 @@ services:
     depends_on:
       - extractor
       - mongodb
+
   extractor:
-    build: ./extractor
+    build:
+      context: ./
+      dockerfile: ./extractor/Dockerfile
     ports:
       - "8080:8080"
     env_file:
@@ -30,6 +36,9 @@ services:
       - app_network
     depends_on:
       - mongodb
+    # volumes:
+    #   - ./phospho-python:/phospho-python
+
   mongodb:
     image: mongo:latest
     ports:
@@ -38,6 +47,21 @@ services:
       - mongodb_data:/data/db
     networks:
       - app_network
+
+  ai-hub:
+    build:
+      context: ./
+      dockerfile: ./ai-hub/Dockerfile
+    ports:
+      - "8080:8080" # Expose AI-Hub service on port 8080
+    env_file:
+      - ./.env.docker
+    networks:
+      - app_network
+    depends_on:
+      - backend
+      - extractor
+      - mongodb
 
 networks:
   app_network:

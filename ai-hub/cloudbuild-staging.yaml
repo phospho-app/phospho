@@ -13,3 +13,4 @@ steps:
       # https://github.com/GoogleContainerTools/kaniko/issues/1669
       - --compressed-caching=false
       - --cache-copy-layers=true
+      - --dockerfile=/ai-hub/Dockerfile

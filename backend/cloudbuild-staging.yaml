@@ -9,4 +9,4 @@ steps:
       - --destination=europe-west1-docker.pkg.dev/portal-385519/phospho-backend/app:staging
       - --cache=true
       - --cache-ttl=72h # Expiration time of the cache. This means dependencies will be cached for 72 hours.
-
+      - --dockerfile=/backend/Dockerfile

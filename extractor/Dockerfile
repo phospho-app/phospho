@@ -7,8 +7,8 @@ WORKDIR /src
 RUN pip install poetry
 
 # Copy pyproject.toml and poetry.lock
-COPY ./pyproject.toml /src/pyproject.toml
-COPY ./poetry.lock /src/poetry.lock
+COPY ./extractor/pyproject.toml /src/pyproject.toml
+COPY ./extractor/poetry.lock /src/poetry.lock
 
 
 # Create virtualenv at .venv in the project instead of ~/.cache/
@@ -20,7 +20,7 @@ RUN poetry install --no-interaction --no-ansi
 
 # Copy source code
 COPY ./extractor /src/extractor
-COPY ./main.py /src/main.py
+COPY ./extractor/main.py /src/main.py
 
 EXPOSE 8080
 
