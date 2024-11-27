@@ -34,9 +34,11 @@ async def post_detect_events_in_task(
     raise_error_if_not_in_pro_tier(org)
 
     task = Task(**event_detection_request.model_dump())
-    extractor_client = ExtractorClient(
-        project_id=project_id,
-        org_id=org["org"].org_id,),
+    extractor_client = (
+        ExtractorClient(
+            project_id=project_id,
+            org_id=org["org"].org_id,
+        ),
     )
     pipeline_results = await extractor_client.run_main_pipeline_on_task(task)
 

@@ -7,20 +7,20 @@ WORKDIR /src
 RUN pip install poetry
 
 # Copy pyproject.toml and poetry.lock
-COPY ./pyproject.toml /src/pyproject.toml
-COPY ./poetry.lock /src/poetry.lock
+COPY ./extractor/pyproject.toml /src/pyproject.toml
+COPY ./extractor/poetry.lock /src/poetry.lock
 
 
 # Create virtualenv at .venv in the project instead of ~/.cache/
 RUN poetry config virtualenvs.in-project true
 
 # Copy phospho package
-COPY ./phospho-python /phospho-python
+COPY ./phospho-python/ /phospho-python
 RUN poetry install --with dev --no-interaction --no-ansi
 
 # Copy source code
 COPY ./extractor /src/extractor
-COPY ./main.py /src/main.py
+COPY ./extractor/main.py /src/main.py
 
 EXPOSE 8080
 
