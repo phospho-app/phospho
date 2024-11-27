@@ -23,7 +23,7 @@ TEMPORAL_NAMESPACE=default
 Install the dependencies if you are running loccaly in dev mode:
 
 ```bash
-poetry install --with dev
+poetry install
 ```
 
 ## Running the worker locally
