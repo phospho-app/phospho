@@ -104,7 +104,7 @@ TEST_PROPELAUTH_USER_ID=
 Make sure to replace the placeholders with your actual credentials. These environment variables are essential for connecting the different components of the Phospho platform.
 Please put this .env file in the `platform`, `ai-hub` and `backend`folder
 
-## Step 4: TODO LOOKS DOCKER DOCS TO CREATE DOCKER COMPOSE ADLE
+## Step 4: build the images
 
 in root folder run:
 

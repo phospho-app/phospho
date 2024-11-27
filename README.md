@@ -122,5 +122,4 @@ npm i # You might need to install Node and npm for this step
 
    - **Backend**: More information in `README.md`
    - **AI Hub**: More information in `README.md`
-   - **Extractor**: More information in `README.md` 
    - **Frontend**: More information in `README.md`
