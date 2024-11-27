@@ -32,10 +32,16 @@ declare global {
 const IntercomClientComponent: React.FC = () => {
   const { user } = useUser();
   useEffect(() => {
+    let app_id: string | undefined = undefined;
+    try {
+      app_id = `${process.env.NEXT_PUBLIC_INTERCOM_APP_ID}`;
+    } catch (e) {
+      console.error(e);
+    }
     window.intercomSettings = {
       api_base: "https://api-iam.intercom.io",
       // Replace with your Intercom app ID.
-      app_id: `${process.env.NEXT_PUBLIC_INTERCOM_APP_ID}`,
+      app_id: app_id,
     };
 
     if (user) {
