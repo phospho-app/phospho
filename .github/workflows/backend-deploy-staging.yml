@@ -273,7 +273,7 @@ jobs:
         run: |
           gcloud run deploy phospho-ai-hub-staging \
             --project $GCP_PROJECT_ID \
-            --port 8080 \
+            --port 8081 \
             --region europe-west1 \
             --allow-unauthenticated \
             --set-env-vars ENVIRONMENT=$ENVIRONMENT,MONGODB_URL=$MONGODB_URL,MONGODB_NAME=$MONGODB_NAME,SENTRY_DSN=$SENTRY_DSN \
