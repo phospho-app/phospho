@@ -30,4 +30,7 @@ Sentry.init({
       blockAllMedia: true,
     }),
   ],
+
+  autoSessionTracking: false,
+  sendClientReports: false,
 });

@@ -11,6 +11,9 @@ export function register() {
 
       // Setting this option to true will print useful information to the console while you're setting up Sentry.
       debug: false,
+
+      autoSessionTracking: false,
+      sendClientReports: false,
     });
   }
 
@@ -24,6 +27,9 @@ export function register() {
 
       // Setting this option to true will print useful information to the console while you're setting up Sentry.
       debug: false,
+
+      autoSessionTracking: false,
+      sendClientReports: false,
     });
   }
 }

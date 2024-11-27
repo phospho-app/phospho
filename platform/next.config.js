@@ -1,16 +1,17 @@
 /** @type {import('next').NextConfig} */
 
-const { version } = require('./package.json');
+const { version } = require("./package.json");
+const TerserPlugin = require("terser-webpack-plugin");
 
 const dns = require("dns");
-dns.setDefaultResultOrder("ipv4first")
+dns.setDefaultResultOrder("ipv4first");
 
 module.exports = {
   experimental: {
     instrumentationHook: true,
   },
   publicRuntimeConfig: {
-    "version": version,
+    version: version,
   },
   reactStrictMode: true,
   async rewrites() {
@@ -18,17 +19,16 @@ module.exports = {
       {
         // This rewrite will handle the specific /api/auth path
         // It will resolve to the Next.js API route
-        source: '/api/auth/:path*',
-        destination: '/api/auth/:path*' // Assuming your Next.js API route is structured like this
+        source: "/api/auth/:path*",
+        destination: "/api/auth/:path*", // Assuming your Next.js API route is structured like this
       },
       {
-        source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL}/api/:path*`
+        source: "/api/:path*",
+        destination: `${process.env.NEXT_PUBLIC_API_URL}/api/:path*`,
       },
-  
-    ]
+    ];
   },
-  output: 'standalone', // Added for the docker mode in self hosting
+  output: "standalone", // Added for the docker mode in self hosting
   webpack: (config, { isServer, buildId, dev, webpack }) => {
     if (!isServer) {
       config.resolve.fallback = {
@@ -37,25 +37,25 @@ module.exports = {
       };
       config.plugins.push(
         new webpack.ProvidePlugin({
-          process: 'process/browser',
+          process: "process/browser",
         }),
-        new webpack.NormalModuleReplacementPlugin(
-          /node:crypto/,
-          (resource) => {
-            resource.request = resource.request.replace(/^node:/, '');
-          }
-        )
+        new webpack.NormalModuleReplacementPlugin(/node:crypto/, (resource) => {
+          resource.request = resource.request.replace(/^node:/, "");
+        }),
       );
+
+      // Add TerserPlugin for client-side
+      config.optimization.minimize = true;
+      config.optimization.minimizer = [new TerserPlugin()];
     }
     return config;
   },
-}
+};
 
 // Verify if NEXT_PUBLIC_API_URL is set
 if (!process.env.NEXT_PUBLIC_API_URL) {
   console.warn("The NEXT_PUBLIC_API_URL environment variable is not defined.");
 }
-
 
 // Injected content via Sentry wizard below
 
@@ -96,9 +96,9 @@ module.exports = withSentryConfig(
     // https://docs.sentry.io/product/crons/
     // https://vercel.com/docs/cron-jobs
     automaticVercelMonitors: true,
-    
+
     // Disables the Sentry webpack plugin to avoid source map uploading during build
     disableServerWebpackPlugin: true,
     disableClientWebpackPlugin: true,
-  }
+  },
 );
