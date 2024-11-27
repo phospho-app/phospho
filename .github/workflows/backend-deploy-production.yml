@@ -43,9 +43,7 @@ jobs:
         env:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
         run: |
-          cp -r phospho-python extractor/phospho-python
-          cd extractor
-          gcloud builds submit --config cloudbuild-production.yaml
+          gcloud builds submit --config extractor/cloudbuild-production.yaml
 
       - name: Deploy to Cloud Run in Production Env
         env:
@@ -115,9 +113,7 @@ jobs:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
         # https://cloud.google.com/sdk/gcloud/reference/builds/submit
         run: |
-          cp -r phospho-python backend/phospho-python
-          cd backend
-          gcloud builds submit --config cloudbuild-production.yaml
+          gcloud builds submit --config backend/cloudbuild-production.yaml
 
       - name: Deploy to Cloud Run in Production Env
         # skip during local actions testing (this is what staging is for)
@@ -210,10 +206,7 @@ jobs:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
         # https://cloud.google.com/sdk/gcloud/reference/builds/submit
         run: |
-          cp -r phospho-python ai-hub/phospho-python
-          cp -r backend ai-hub/backend
-          cd ai-hub
-          gcloud builds submit --config cloudbuild-production.yaml
+          gcloud builds submit --config ai-hub/cloudbuild-production.yaml
 
       - name: Deploy to Cloud Run in Production Env
         env:
