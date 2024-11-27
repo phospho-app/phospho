@@ -15,7 +15,7 @@ services:
       context: ./
       dockerfile: ./backend/Dockerfile
     ports:
-      - "80:80"
+      - "8000:8000"
     env_file:
       - ./.env.docker
     networks:

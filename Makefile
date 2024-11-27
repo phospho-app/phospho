@@ -1,14 +1,14 @@
-.PHONY: install_deps extractor backend platform all stop
+.PHONY: install temporal ai_hub extractor backend platform all stop
 
-all: install_deps extractor backend platform
+up: temporal ai_hub extractor backend platform all
 
-install_deps:
+install:
 	@echo "Installing dependencies for all services"
 	pip install poetry
-	cd ai_hub && poetry install
+	cd ai-hub && poetry install
 	cd extractor && poetry install
 	cd backend && poetry install
-	cd platform && npm install
+	cd platform && npm install 
 
 temporal:
 	@echo "Starting temporal local server"
@@ -16,25 +16,38 @@ temporal:
 
 extractor:
 	@echo "Starting extractor"
-	cd extractor && poetry run python main.py
+	cd extractor && poetry run python main.py &
 
 ai_hub:
 	@echo "Starting AI hub"
-	cd backend && poetry run python main.py
+	cd ai-hub && poetry run python main.py &
 
 backend:
 	@echo "Starting backend"
-	cd backend && poetry run uvicorn app.main:app --reload --port 8000
+	cd backend && poetry run uvicorn phospho_backend.main:app --reload --port 8000 &
 
 platform:
 	@echo "Starting platform"
 	cd platform && npm run dev &
-	@echo "🧪🧪🧪 Everything is up and running! Run 'make stop' to stop everything"
+	@echo "\033[1;32m🧪🧪🧪 Everything is up and running! Run 'make stop' to stop everything\033[0m"
 
 stop:
 	@echo "Stopping all services"
-	-pkill -f 'uvicorn.*7605'
+	@echo "Stopping backend"
+	-pkill -f 'uvicorn.*app.phospho_backend:app'
 	-pkill -f 'uvicorn.*8000'
-	-pkill -f 'node.*platform'
+
+	@echo "Stopping ai-hub and extractor"
+	-pkill -f 'python.*main.py' 
+
+	@echo "Stopping temporal"
+	-pkill -f 'python.*temporal_client'
 	-pkill -f 'temporal.*7999'
+	-pkill -f 'temporal.*server'
+	-pkill -f 'temporal.*client'
+
+	@echo "Stopping platform"
+	-pkill -f 'node.*platform'
+
+	@echo "\033[1;32m🛑🛑🛑 Everything stopped\033[0m"
 	
