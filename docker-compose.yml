@@ -11,7 +11,9 @@ services:
       - backend
 
   backend:
-    build: ./backend
+    build:
+      context: ./
+      dockerfile: ./backend/Dockerfile
     ports:
       - "80:80"
     env_file:
@@ -24,7 +26,7 @@ services:
 
   extractor:
     build:
-      context: .
+      context: ./
       dockerfile: ./extractor/Dockerfile
     ports:
       - "8080:8080"
@@ -48,8 +50,8 @@ services:
 
   ai-hub:
     build:
-      context: ./ai-hub
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: ./ai-hub/Dockerfile
     ports:
       - "8080:8080" # Expose AI-Hub service on port 8080
     env_file:
@@ -60,10 +62,6 @@ services:
       - backend
       - extractor
       - mongodb
-    volumes:
-      # Mounting backend and phospho-python into ai-hub during runtime
-      - ./backend:/backend
-      - ./phospho-python:/phospho-python
 
 networks:
   app_network:

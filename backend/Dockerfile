@@ -7,8 +7,8 @@ WORKDIR /src
 RUN pip install poetry
 
 # Copy pyproject.toml and poetry.lock
-COPY ./pyproject.toml /src/pyproject.toml
-COPY ./poetry.lock /src/poetry.lock
+COPY ./backend/pyproject.toml /src/pyproject.toml
+COPY ./backend/poetry.lock /src/poetry.lock
 
 # Install dependencies
 RUN poetry config virtualenvs.create false
@@ -18,7 +18,7 @@ COPY ./phospho-python /phospho-python
 RUN poetry install --with dev --no-interaction --no-ansi
 
 # Copy source code
-COPY ./phospho_backend /src/phospho_backend
+COPY ./backend/phospho_backend /src/phospho_backend
 
 # Run the server on port 80
 CMD ["uvicorn", "phospho_backend.main:app", "--host", "0.0.0.0", "--port", "80"]

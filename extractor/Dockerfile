@@ -15,7 +15,7 @@ COPY ./extractor/poetry.lock /src/poetry.lock
 RUN poetry config virtualenvs.in-project true
 
 # Copy phospho package
-COPY ./phospho-python/ /phospho-python
+COPY ./phospho-python /phospho-python
 RUN poetry install --with dev --no-interaction --no-ansi
 
 # Copy source code
