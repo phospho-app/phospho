@@ -42,11 +42,9 @@ First, clone the repository containing the source code of the platform with
 git clone https://github.com/phospho-app/phospho.git
 ```
 
-The folder will hold all necessary Docker configurations for deploying Phospho!
-
 ## Step 2: Set up your environment files
 
-Write your environment variables following this example in an .env:
+First create in the root folder a file called `.env.docker` following this example:
 
 ```bash
 # Application Environment
@@ -82,7 +80,7 @@ MONGODB_NAME="test"
 MONGODB_URL=""
 
 # Local Development Settings
-TEMPORAL_HOST_URL=localhost:7233
+TEMPORAL_HOST_URL=host.docker.internal:7233
 TEMPORAL_NAMESPACE=default
 TEMPORAL_MTLS_TLS_CERT_BASE64=
 TEMPORAL_MTLS_TLS_KEY_BASE64=
@@ -104,12 +102,22 @@ TEST_PROPELAUTH_USER_ID=
 Make sure to replace the placeholders with your actual credentials. These environment variables are essential for connecting the different components of the Phospho platform.
 Please put this .env file in the `platform`, `ai-hub` and `backend`folder
 
-## Step 4: TODO LOOKS DOCKER DOCS TO CREATE DOCKER COMPOSE ADLE
+## Step 3: Build and run
 
-in root folder run:
+### Temporal
+
+Make sure Temporal is running. Use the [Temporal CLI](https://temporal.io/setup/install-temporal-cli) to do so.
 
 ```bash
-docker compose
+temporal server start-dev --db-filename your_temporal.db --ui-port 7999
+```
+
+For production environment, we recommend you use the Cloud version of Temporal. If so, make sure to update the env variables starting with `TEMPORAL_`.
+
+### Docker compose
+
+```bash
+docker compose up
 ```
 
 ## Conclusion
@@ -117,5 +125,3 @@ docker compose
 Congratulations! You have successfully deployed the Phospho platform with Docker. You can now start exploring the platform and use its powerful tools to manage your LLM apps more effectively.
 
 If you run into any issues, feel free to ask for support on the [Phospho Discord channel](https://discord.gg/phospho).
-
-Happy building!
