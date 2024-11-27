@@ -322,7 +322,7 @@ jobs:
       # Install dependencies if cache does not exist
       - name: Install dependencies
         run: |
-          poetry install --with dev --no-interaction --no-root
+          poetry install --no-interaction --no-root
 
       - name: Test with pytest
         env:

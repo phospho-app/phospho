@@ -33,7 +33,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd backend
-          poetry install --with dev --no-interaction --no-root
+          poetry install --no-interaction --no-root
           pip install mypy pydantic[mypy]
 
       - name: Get changed Python files
@@ -80,7 +80,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd backend
-          poetry install --with dev --no-interaction --no-root
+          poetry install --no-interaction --no-root
 
       - name: Test with pytest
         env:
