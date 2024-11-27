@@ -15,7 +15,7 @@ RUN poetry config virtualenvs.create false
 
 # Copy phospho package
 COPY ./phospho-python /phospho-python
-RUN poetry install --with dev --no-interaction --no-ansi
+RUN poetry install --no-interaction --no-ansi
 
 # Copy source code
 COPY ./backend/phospho_backend /src/phospho_backend
