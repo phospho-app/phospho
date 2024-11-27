@@ -34,7 +34,8 @@ const IntercomClientComponent: React.FC = () => {
   useEffect(() => {
     window.intercomSettings = {
       api_base: "https://api-iam.intercom.io",
-      app_id: process.env.NEXT_PUBLIC_INTERCOM_APP_ID, // Replace with your Intercom app ID.
+      // Replace with your Intercom app ID.
+      app_id: `${process.env.NEXT_PUBLIC_INTERCOM_APP_ID}`,
     };
 
     if (user) {
