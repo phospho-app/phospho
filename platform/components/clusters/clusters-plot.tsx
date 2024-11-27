@@ -1,3 +1,5 @@
+"use client";
+
 import { SendDataAlertDialog } from "@/components/callouts/import-data";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
@@ -8,19 +10,77 @@ import { Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Check, ChevronRight, Plus } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { Data } from "plotly.js";
+import { Config, Data, Layout } from "plotly.js";
 import {
   Suspense,
-  lazy,
+  forwardRef, // lazy,
   useCallback,
   useEffect,
+  useId,
+  useImperativeHandle,
   useRef,
   useState,
 } from "react";
 import useSWR from "swr";
 
-const Plot = lazy(() => import("react-plotly.js"));
+interface PlotProps {
+  id?: string;
+  className?: string;
+  data: Data[];
+  layout?: Partial<Layout>;
+  config?: Partial<Config>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onClick?: (displayedDataPoints: any) => void;
+}
+
+// const Plot = lazy(() => import("react-plotly.js"));
+export const Plot = dynamic(
+  () =>
+    // @ts-expect-error This module is a dynamic import installed with react-plotly
+    // See https://dev.to/composite/how-to-integrate-plotlyjs-on-nextjs-14-with-app-router-1loj
+    import("plotly.js/dist/plotly.js").then(({ newPlot, purge }) => {
+      const Plotly = forwardRef<HTMLDivElement, PlotProps>(
+        ({ id, className, data, layout, config }, ref) => {
+          const originId = useId();
+          const realId = id || originId;
+          const originRef = useRef<HTMLDivElement | null>(null);
+          const [handle, setHandle] = useState<
+            Plotly.PlotlyHTMLElement | undefined
+          >(undefined);
+
+          useEffect(() => {
+            let instance: Plotly.PlotlyHTMLElement | undefined;
+            if (originRef.current) {
+              newPlot(originRef.current!, data, layout, config).then(
+                (ref: Plotly.PlotlyHTMLElement) => setHandle((instance = ref)),
+              );
+            }
+            return () => {
+              if (instance) {
+                purge(instance);
+              }
+            };
+          }, [data, layout, config]);
+
+          useImperativeHandle(
+            ref,
+            () =>
+              (handle as unknown as HTMLDivElement) ??
+              originRef.current ??
+              document.createElement("div"),
+            [handle],
+          );
+
+          return <div id={realId} ref={originRef} className={className}></div>;
+        },
+      );
+      Plotly.displayName = "Plotly";
+      return Plotly;
+    }),
+  { ssr: false },
+);
 
 function generateDummyData({ displayCTA = false }: { displayCTA?: boolean }) {
   // Generate placeholder data for the plot

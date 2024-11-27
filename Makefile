@@ -1,13 +1,15 @@
-.PHONY: install temporal ai_hub extractor backend platform all stop
+.PHONY: install temporal ai_hub extractor backend platform all stop success platform_build
 
-up: temporal ai_hub extractor backend platform all
+up: temporal ai_hub extractor backend platform all success
+
+build_up: temporal ai_hub extractor backend platform_build all success
 
 install:
 	@echo "Installing dependencies for all services"
-	pip install poetry
-	cd ai-hub && poetry install
-	cd extractor && poetry install
-	cd backend && poetry install
+	pip install poetry 
+	cd ai-hub && poetry install 
+	cd extractor && poetry install 
+	cd backend && poetry install 
 	cd platform && npm install 
 
 temporal:
@@ -29,7 +31,13 @@ backend:
 platform:
 	@echo "Starting platform"
 	cd platform && npm run dev &
+
+success:
 	@echo "\033[1;32m🧪🧪🧪 Everything is up and running! Run 'make stop' to stop everything\033[0m"
+
+platform_build:
+	@echo "Building platform"
+	cd platform && npm run build
 
 stop:
 	@echo "Stopping all services"
