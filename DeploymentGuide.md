@@ -44,7 +44,7 @@ git clone https://github.com/phospho-app/phospho.git
 
 ## Step 2: Set up your environment files
 
-First create in the root folder a file called `.env.docker` following this example
+First create in the root folder a file called `.env.docker` following this example:
 
 ```bash
 # Application Environment
@@ -102,15 +102,19 @@ TEST_PROPELAUTH_USER_ID=
 Make sure to replace the placeholders with your actual credentials. These environment variables are essential for connecting the different components of the Phospho platform.
 Please put this .env file in the `platform`, `ai-hub` and `backend`folder
 
-## Step 3: build and run the images
+## Step 3: Build and run
 
-In the root folder run:
+### Temporal
+
+Make sure Temporal is running. Use the [Temporal CLI](https://temporal.io/setup/install-temporal-cli) to do so.
 
 ```bash
-docker compose build
+temporal server start-dev --db-filename your_temporal.db --ui-port 7999
 ```
 
-Then you have to run the images with:
+For production environment, we recommend you use the Cloud version of Temporal. If so, make sure to update the env variables starting with `TEMPORAL_`.
+
+### Docker compose
 
 ```bash
 docker compose up
