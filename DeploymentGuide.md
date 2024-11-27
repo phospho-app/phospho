@@ -42,11 +42,9 @@ First, clone the repository containing the source code of the platform with
 git clone https://github.com/phospho-app/phospho.git
 ```
 
-The folder will hold all necessary Docker configurations for deploying Phospho!
-
 ## Step 2: Set up your environment files
 
-Write your environment variables following this example in an .env:
+First create in the root folder a file called `.env.docker` following this example
 
 ```bash
 # Application Environment
@@ -104,12 +102,18 @@ TEST_PROPELAUTH_USER_ID=
 Make sure to replace the placeholders with your actual credentials. These environment variables are essential for connecting the different components of the Phospho platform.
 Please put this .env file in the `platform`, `ai-hub` and `backend`folder
 
-## Step 4: build the images
+## Step 3: build and run the images
 
-in root folder run:
+In the root folder run:
 
 ```bash
-docker compose
+docker compose build
+```
+
+Then you have to run the images with:
+
+```bash
+docker compose up
 ```
 
 ## Conclusion
@@ -117,5 +121,3 @@ docker compose
 Congratulations! You have successfully deployed the Phospho platform with Docker. You can now start exploring the platform and use its powerful tools to manage your LLM apps more effectively.
 
 If you run into any issues, feel free to ask for support on the [Phospho Discord channel](https://discord.gg/phospho).
-
-Happy building!

@@ -36,8 +36,6 @@ services:
       - app_network
     depends_on:
       - mongodb
-    # volumes:
-    #   - ./phospho-python:/phospho-python
 
   mongodb:
     image: mongo:latest
@@ -53,7 +51,7 @@ services:
       context: ./
       dockerfile: ./ai-hub/Dockerfile
     ports:
-      - "8081:8081" # Expose AI-Hub service on port 8080
+      - "8081:8081"
     env_file:
       - ./.env.docker
     networks:
