@@ -1,6 +1,6 @@
 from .base import (
+    collect_metadata,
     convert_additional_data_to_dict,
     get_time_created_at,
-    collect_metadata,
 )
 from .messages import process_logs_for_messages

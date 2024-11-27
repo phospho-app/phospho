@@ -2,9 +2,8 @@ import os
 import time
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel
-
 from email_event import EmailEventlModel
+from pydantic import BaseModel
 from pymongo import MongoClient
 
 # Set the MONGODB_URL and MONGODB_NAME environment variables

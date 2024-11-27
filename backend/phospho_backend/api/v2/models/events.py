@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 from pydantic import BaseModel
 
 from phospho_backend.api.v3.models.run import RoleContentMessage
@@ -9,7 +7,7 @@ from .log import MinimalLogEvent
 
 
 class Events(BaseModel):
-    events: List[Event]
+    events: list[Event]
 
 
 class DetectEventsInTaskRequest(MinimalLogEvent):
@@ -17,8 +15,8 @@ class DetectEventsInTaskRequest(MinimalLogEvent):
 
 
 class DetectEventInMessagesRequest(BaseModel):
-    messages: List[RoleContentMessage]
+    messages: list[RoleContentMessage]
 
 
 class EventDetectionReply(BaseModel, extra="allow"):
-    events: Dict[str, List[Event]]
+    events: dict[str, list[Event]]

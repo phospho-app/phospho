@@ -1,54 +1,46 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
-from typing import Dict, List, Optional, Union, Literal
-from phospho_backend.utils import generate_uuid, generate_timestamp
+
+from phospho_backend.utils import generate_timestamp, generate_uuid
 
 
 class MinimalLogEvent(BaseModel, extra="allow"):
     # This is the minimal log event
-    project_id: Optional[str] = None
+    project_id: str | None = None
     input: str
-    output: Optional[str] = None
+    output: str | None = None
 
 
 class LogRequest(BaseModel):
-    batched_log_events: List[MinimalLogEvent]
+    batched_log_events: list[MinimalLogEvent]
 
 
 class LogEvent(MinimalLogEvent, extra="allow"):
     # Optional fields
     client_created_at: int = Field(default_factory=generate_timestamp)
-    created_at: Optional[int] = None
-    last_update: Optional[int] = None
+    created_at: int | None = None
+    last_update: int | None = None
     # metadata
-    metadata: Optional[Dict[str, object]] = Field(default_factory=Dict[str, object])
-    session_id: Optional[str] = None
+    metadata: dict[str, object] | None = Field(default_factory=dict[str, object])
+    session_id: str | None = None
     task_id: str = Field(default_factory=generate_uuid)
-    step_id: Optional[str] = None
-    version_id: Optional[str] = None
-    user_id: Optional[str] = None
-    flag: Optional[Literal["success", "failure"]] = None
+    step_id: str | None = None
+    version_id: str | None = None
+    user_id: str | None = None
+    flag: Literal["success", "failure"] | None = None
     # Testing
-    test_id: Optional[str] = None
+    test_id: str | None = None
     # input
-    raw_input: Optional[
-        Union[
-            Dict[str, object],
-            str,
-            List[Dict[str, object]],
-            List[str],
-        ]
-    ] = None
-    raw_input_type_name: Optional[str] = None
+    raw_input: None | (
+        dict[str, object] | str | list[dict[str, object]] | list[str]
+    ) = None
+    raw_input_type_name: str | None = None
     # output
-    raw_output: Optional[
-        Union[
-            Dict[str, object],
-            str,
-            List[Optional[Dict[str, object]]],
-            List[Optional[str]],
-        ]
-    ] = None
-    raw_output_type_name: Optional[str] = None
+    raw_output: None | (
+        dict[str, object] | str | list[dict[str, object] | None] | list[str | None]
+    ) = None
+    raw_output_type_name: str | None = None
     # data
     environment: str = "default environment"
 
@@ -58,4 +50,4 @@ class LogError(BaseModel):
 
 
 class LogReply(BaseModel):
-    logged_events: List[Union[LogEvent, LogError]]
+    logged_events: list[LogEvent | LogError]

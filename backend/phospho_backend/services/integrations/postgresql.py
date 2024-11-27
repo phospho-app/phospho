@@ -1,9 +1,10 @@
 from datetime import datetime
-from typing import List, Literal, Optional
+from typing import Literal
 
 import pandas as pd
 from fastapi import HTTPException
 from loguru import logger
+from phospho.models import FlattenedTask, ProjectDataFilters
 from phospho_backend.api.platform.models import Pagination
 from phospho_backend.core import config, constants
 from phospho_backend.db.mongo import get_mongo_db
@@ -18,8 +19,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 from tqdm import tqdm
 
-from phospho.models import FlattenedTask, ProjectDataFilters
-
 
 class PostgresqlCredentials(BaseModel, extra="allow"):
     org_id: str
@@ -30,10 +29,10 @@ class PostgresqlCredentials(BaseModel, extra="allow"):
     username: str
     password: str
     # Projects that have started exporting are stored here
-    projects_started: List[str] = Field(default_factory=list)
+    projects_started: list[str] = Field(default_factory=list)
     # Projects that have finished exporting are stored here
-    projects_finished: List[str] = Field(default_factory=list)
-    last_updated: Optional[datetime] = None
+    projects_finished: list[str] = Field(default_factory=list)
+    last_updated: datetime | None = None
 
 
 class PostgresqlIntegration:
@@ -41,15 +40,15 @@ class PostgresqlIntegration:
     Class to export a project to a dedicated Postgres database
     """
 
-    credentials: Optional[PostgresqlCredentials] = None
+    credentials: PostgresqlCredentials | None = None
 
     def __init__(
         self,
         org_id: str,
         org_name: str,
-        project_id: Optional[str] = None,
-        project_name: Optional[str] = None,
-        org_metadata: Optional[dict] = None,
+        project_id: str | None = None,
+        project_name: str | None = None,
+        org_metadata: dict | None = None,
     ):
         """
         This class exports a project to a dedicated Postgres database.
@@ -375,7 +374,7 @@ class PostgresqlIntegration:
         # Cast the result to a boolean
         return bool(result.scalar())
 
-    def get_table_columns(self) -> List[str]:
+    def get_table_columns(self) -> list[str]:
         """
         Get the columns of the table in the dedicated Postgres database.
         """

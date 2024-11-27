@@ -21,7 +21,7 @@ RUN poetry install --no-interaction --no-ansi
 COPY ./ai_hub /src/ai_hub
 COPY ./main.py /src/main.py
 
-EXPOSE 8080
+EXPOSE 8081
 
 # Run the worker
 CMD ["poetry", "run", "python", "main.py"]

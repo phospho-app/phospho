@@ -4,13 +4,12 @@ Handle all authentification related tasks.
 We now use Propelauth for authentification.
 """
 
-from typing import Optional
-
 from fastapi import Depends, HTTPException, Request
 from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.security.utils import get_authorization_scheme_param
 from loguru import logger
 from propelauth_fastapi import User, init_auth  # type: ignore
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 from phospho_backend.core import config
 from phospho_backend.db.mongo import get_mongo_db
@@ -21,11 +20,11 @@ propelauth = init_auth(config.PROPELAUTH_URL, config.PROPELAUTH_API_KEY)
 bearer = HTTPBearer()
 
 
-def is_org_in_alpha(org: dict) -> bool:
+def is_org_in_alpha(org: OrgApiKeyValidation) -> bool:
     """
     Check if an organization is in the alpha program
     """
-    org_metadata = org["org"].get("metadata", {})
+    org_metadata = org.org.metadata or {}
     if not org_metadata:
         return False
 
@@ -34,7 +33,7 @@ def is_org_in_alpha(org: dict) -> bool:
 
 def authenticate_org_key(
     authorization: HTTPAuthorizationCredentials = Depends(bearer),
-) -> dict:
+) -> OrgApiKeyValidation:
     """
     API key authentification for orgs
 
@@ -51,7 +50,7 @@ def authenticate_org_key(
         raise HTTPException(status_code=401, detail="Invalid token")
 
     logger.debug(
-        f"API key authentification for org {org['org']['org_id']} ending in {api_key_token[-4:]}"
+        f"API key authentification for org {org.org.org_id} ending in {api_key_token[-4:]}"
     )
 
     return org
@@ -59,7 +58,7 @@ def authenticate_org_key(
 
 def authenticate_org_key_in_alpha(
     authorization: HTTPAuthorizationCredentials = Depends(bearer),
-) -> dict:
+) -> OrgApiKeyValidation:
     """
     API key authentification for orgs
     Request will be denied if the org is not in the alpha program
@@ -81,13 +80,13 @@ def authenticate_org_key_in_alpha(
         raise HTTPException(status_code=401, detail="Invalid token")
 
     logger.debug(
-        f"API key authentification for org {org['org']['org_id']} ending in {api_key_token[-4:]}"
+        f"API key authentification for org {org.org.org_id} ending in {api_key_token[-4:]}"
     )
 
     return org
 
 
-def authenticate_org_key_no_exception(request: Request) -> Optional[dict]:
+def authenticate_org_key_no_exception(request: Request) -> OrgApiKeyValidation | None:
     """
     API key authentification for orgs. Does NOT raise an exception if the token is invalid.
     """
@@ -103,20 +102,22 @@ def authenticate_org_key_no_exception(request: Request) -> Optional[dict]:
         return None
 
     logger.debug(
-        f"API key authentification for org {org['org']['org_id']} ending in {credentials[-4:]}"
+        f"API key authentification for org {org.org.org_id} ending in {credentials[-4:]}"
     )
 
     return org
 
 
-async def verify_propelauth_org_owns_project_id(org: dict, project_id: str) -> None:
+async def verify_propelauth_org_owns_project_id(
+    org: OrgApiKeyValidation, project_id: str
+) -> None:
     """
     Fetch the project and check that the org is the owner of the project.
     Used as a workaround when you don't know the org_id.
 
     TODO : Add org_id to the documents to avoid this costy check.
     """
-    org_id = org["org"].get("org_id")
+    org_id = org.org.org_id
     if not org_id:
         raise HTTPException(status_code=403, detail="Access denied")
 
@@ -177,16 +178,16 @@ async def verify_if_propelauth_user_can_access_project(
     return org_id
 
 
-def raise_error_if_not_in_pro_tier(org: dict) -> None:
+def raise_error_if_not_in_pro_tier(org: OrgApiKeyValidation) -> None:
     """Raise an HTTPException if the org is not in the pro tier."""
     if not config.ENVIRONMENT == "production":
         return
-    org_id = org["org"].get("org_id")
+    org_id = org.org.org_id
     # Exempted orgs
     if org_id in config.EXEMPTED_ORG_IDS:
         return
 
-    org_metadata = org.get("metadata") or {"plan": "hobby"}
+    org_metadata = org.metadata or {"plan": "hobby"}
     if org_metadata is None or org_metadata.get("plan") != "pro":
         raise HTTPException(
             status_code=403,

@@ -1,8 +1,8 @@
+from loguru import logger
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http import models
-from extractor.core import config
-from loguru import logger
 
+from extractor.core import config
 
 qdrant_db = None
 

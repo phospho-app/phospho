@@ -1,9 +1,18 @@
 import datetime
 import io
-from typing import Dict, List, Literal, Optional
+from typing import Literal
 
 import pandas as pd  # type: ignore
 import resend
+from fastapi import HTTPException
+from loguru import logger
+from phospho.models import (
+    Cluster,
+    Clustering,
+    EventDefinition,
+    ProjectDataFilters,
+    Threshold,
+)
 from phospho_backend.api.v2.models.embeddings import Embedding
 from phospho_backend.core import config
 from phospho_backend.db.models import (
@@ -15,24 +24,16 @@ from phospho_backend.db.models import (
 )
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.security.authentification import propelauth
+from phospho_backend.services.mongo.sessions import get_all_sessions
 from phospho_backend.services.mongo.tasks import (
     fetch_flattened_tasks,
     get_all_tasks,
     label_sentiment_analysis,
 )
-
 from phospho_backend.services.mongo.users import fetch_users_metadata
-from phospho.models import ProjectDataFilters
-
-
-from phospho_backend.services.mongo.sessions import get_all_sessions
 from phospho_backend.services.slack import slack_notification
 from phospho_backend.utils import generate_timestamp, generate_uuid
-from fastapi import HTTPException
-from loguru import logger
 from propelauth_fastapi import User  # type: ignore
-
-from phospho.models import Cluster, Clustering, EventDefinition, Threshold
 
 
 async def get_project_by_id(project_id: str) -> Project:
@@ -289,7 +290,7 @@ async def update_project(project: Project, **kwargs) -> Project:
     return updated_project
 
 
-async def add_project_events(project_id: str, events: List[EventDefinition]) -> Project:
+async def add_project_events(project_id: str, events: list[EventDefinition]) -> Project:
     mongo_db = await get_mongo_db()
     # Get the current events settings
     current_project = await get_project_by_id(project_id)
@@ -329,9 +330,9 @@ async def add_project_events(project_id: str, events: List[EventDefinition]) -> 
 async def email_project_data(
     project_id: str,
     uid: str,
-    limit: Optional[int] = 5_000,
+    limit: int | None = 5_000,
     scope: Literal["tasks", "users"] = "tasks",
-    filters: Optional[ProjectDataFilters] = None,
+    filters: ProjectDataFilters | None = None,
 ) -> None:
     def send_error_message():
         # Send an error message to the user
@@ -527,7 +528,7 @@ async def store_onboarding_survey(user: User, survey: dict):
 
 async def collect_languages(
     project_id: str,
-) -> List[str]:
+) -> list[str]:
     """
     Collect all detected languages from the tasks of a project
     """
@@ -543,7 +544,7 @@ async def collect_languages(
     return languages
 
 
-def only_keep_fields(data: Optional[dict], fields: List[str]) -> Optional[dict]:
+def only_keep_fields(data: dict | None, fields: list[str]) -> dict | None:
     """
     Keep only the fields in the list in the data dict
     """
@@ -567,14 +568,14 @@ async def copy_template_project_to_new(
     mongo_db = await get_mongo_db()
 
     # event_definition_id -> EventDefinition
-    event_definition_pairs: Dict[str, EventDefinition] = {}
-    event_pairs: Dict[str, Event] = {}
-    task_pairs: Dict[str, Task] = {}
-    session_pairs: Dict[str, Session] = {}
+    event_definition_pairs: dict[str, EventDefinition] = {}
+    event_pairs: dict[str, Event] = {}
+    task_pairs: dict[str, Task] = {}
+    session_pairs: dict[str, Session] = {}
     # embedding_id -> Embedding
-    embedding_pairs: Dict[str, Embedding] = {}
-    cluster_pairs: Dict[str, Cluster] = {}
-    clustering_pairs: Dict[str, Clustering] = {}
+    embedding_pairs: dict[str, Embedding] = {}
+    cluster_pairs: dict[str, Cluster] = {}
+    clustering_pairs: dict[str, Clustering] = {}
 
     if config.ENVIRONMENT == "production":
         template_name_to_project_id = {
@@ -598,7 +599,7 @@ async def copy_template_project_to_new(
 
     # Add sessions to the project
     sessions_in_template = await get_all_sessions(template_project_id, get_events=True)
-    sessions: List[Session] = []
+    sessions: list[Session] = []
     for session in sessions_in_template:
         old_session_id = session.id
         session.id = generate_uuid()
@@ -626,7 +627,7 @@ async def copy_template_project_to_new(
         )
         .to_list(length=None)
     )
-    event_definitions: List[EventDefinition] = []
+    event_definitions: list[EventDefinition] = []
     for event_definition in event_definitions_in_template:
         event_definition_model = EventDefinition.model_validate(event_definition)
         event_definition_pairs[event_definition_model.id] = event_definition_model
@@ -644,7 +645,7 @@ async def copy_template_project_to_new(
     tasks_in_template = await get_all_tasks(
         project_id=template_project_id, get_events=False
     )
-    tasks: List[Task] = []
+    tasks: list[Task] = []
     for task in tasks_in_template:
         old_task_id = task.id
         task.id = generate_uuid()
@@ -698,7 +699,7 @@ async def copy_template_project_to_new(
         .to_list(length=None)
     )
 
-    events: List[Event] = []
+    events: list[Event] = []
     for event in default_events:
         event_model = Event.model_validate(event)
         if event_model.task_id not in task_pairs:
@@ -743,7 +744,7 @@ async def copy_template_project_to_new(
         .find({"project_id": template_project_id})
         .to_list(length=None)
     )
-    embeddings: List[Embedding] = []
+    embeddings: list[Embedding] = []
     for embedding in embeddings_in_template:
         embedding_model = Embedding.model_validate(embedding)
         old_embedding_id = embedding_model.id
@@ -776,7 +777,7 @@ async def copy_template_project_to_new(
         .to_list(length=None)
     )
 
-    clusters: List[Cluster] = []
+    clusters: list[Cluster] = []
     for cluster in default_clusters:
         cluster_model = Cluster.model_validate(cluster)
         old_cluster_id = cluster_model.id
@@ -797,7 +798,7 @@ async def copy_template_project_to_new(
         .find({"project_id": template_project_id})
         .to_list(length=None)
     )
-    clusterings: List[Clustering] = []
+    clusterings: list[Clustering] = []
     for clustering in clusterings_in_template:
         clustering_model = Clustering.model_validate(clustering)
         old_clustering_id = clustering_model.id
@@ -850,8 +851,8 @@ async def copy_template_project_to_new(
 
 async def project_check_automatic_analytics_monthly_limit(
     project_id: str,
-    nb_tasks_to_process: Optional[int] = None,
-    recipe_type_list: Optional[List[str]] = None,
+    nb_tasks_to_process: int | None = None,
+    recipe_type_list: list[str] | None = None,
 ) -> bool:
     """
     Check if the project reached its monthly limit for automatic analytics.

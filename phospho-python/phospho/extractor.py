@@ -1,8 +1,8 @@
-import logging
-import pydantic
 import json
+import logging
+from typing import Any, Callable, Dict, Optional, Tuple, Union
 
-from typing import Union, Dict, Any, Tuple, Optional, Callable
+import pydantic
 
 from .utils import filter_nonjsonable_keys, is_jsonable
 

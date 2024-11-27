@@ -1,8 +1,9 @@
+from fastapi import HTTPException
+from phospho.models import UsageQuota
+
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.security.authentification import propelauth
 from phospho_backend.services.mongo.organizations import get_usage_quota
-from fastapi import HTTPException
-from phospho.models import UsageQuota
 
 
 async def get_quota_for_org(

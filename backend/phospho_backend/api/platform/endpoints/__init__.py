@@ -1,12 +1,14 @@
-from . import clustering
-from . import debug
-from . import events
-from . import explore
-from . import integrations
-from . import metadata
-from . import onboarding
-from . import organizations
-from . import projects
-from . import recipes
-from . import sessions
-from . import tasks
+from . import (
+    clustering,
+    debug,
+    events,
+    explore,
+    integrations,
+    metadata,
+    onboarding,
+    organizations,
+    projects,
+    recipes,
+    sessions,
+    tasks,
+)

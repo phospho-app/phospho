@@ -1,18 +1,16 @@
 from collections import defaultdict
-from typing import Dict, List, Literal, Optional, cast
-from phospho_backend.api.platform.models.explore import Pagination, Sorting
-from phospho_backend.services.mongo.query_builder import QueryBuilder
-from phospho.models import FlattenedTask, ProjectDataFilters, ScoreRange, HumanEval
-from phospho.utils import filter_nonjsonable_keys
+from typing import Literal, cast
 
 import pydantic
-from phospho_backend.db.models import Eval, EventDefinition, Task, Event
-from phospho_backend.db.mongo import get_mongo_db
 from fastapi import HTTPException
-
-from phospho_backend.utils import generate_uuid
-
 from loguru import logger
+from phospho.models import FlattenedTask, HumanEval, ProjectDataFilters, ScoreRange
+from phospho.utils import filter_nonjsonable_keys
+from phospho_backend.api.platform.models.explore import Pagination, Sorting
+from phospho_backend.db.models import Eval, Event, EventDefinition, Task
+from phospho_backend.db.mongo import get_mongo_db
+from phospho_backend.services.mongo.query_builder import QueryBuilder
+from phospho_backend.utils import generate_uuid
 from pymongo import InsertOne, UpdateOne
 
 
@@ -20,12 +18,12 @@ async def create_task(
     project_id: str,
     org_id: str,
     input: str,
-    task_id: Optional[str] = None,
-    output: Optional[str] = None,
-    additional_input: Optional[dict] = None,
-    data: Optional[dict] = None,
-    session_id: Optional[str] = None,
-    flag: Optional[str] = None,
+    task_id: str | None = None,
+    output: str | None = None,
+    additional_input: dict | None = None,
+    data: dict | None = None,
+    session_id: str | None = None,
+    flag: str | None = None,
 ) -> Task:
     mongo_db = await get_mongo_db()
     if task_id is None:
@@ -83,8 +81,8 @@ async def get_task_by_id(task_id: str) -> Task:
 async def human_eval_task(
     task_model: Task,
     human_eval: str,
-    source: Optional[str] = None,
-    notes: Optional[str] = None,
+    source: str | None = None,
+    notes: str | None = None,
 ) -> Task:
     """
     Adds a human evaluation to a task and updates evaluation data for retrocompatibility
@@ -112,7 +110,7 @@ async def human_eval_task(
 
     # Update the task object
     try:
-        update_payload: Dict[str, object] = {}
+        update_payload: dict[str, object] = {}
         update_payload["flag"] = flag
         update_payload["last_eval"] = eval_data.model_dump()
         update_payload["human_eval"] = HumanEval(flag=human_eval).model_dump()
@@ -172,11 +170,11 @@ async def human_eval_task(
 
 async def update_task(
     task_model: Task,
-    metadata: Optional[dict] = None,
-    data: Optional[dict] = None,
-    notes: Optional[str] = None,
-    flag: Optional[str] = None,
-    flag_source: Optional[str] = None,
+    metadata: dict | None = None,
+    data: dict | None = None,
+    notes: str | None = None,
+    flag: str | None = None,
+    flag_source: str | None = None,
 ) -> Task:
     mongo_db = await get_mongo_db()
 
@@ -223,8 +221,8 @@ async def add_event_to_task(
     task: Task,
     event: EventDefinition,
     event_source: str = "owner",
-    score_range_value: Optional[float] = None,
-    score_category_label: Optional[str] = None,
+    score_range_value: float | None = None,
+    score_category_label: str | None = None,
 ) -> Task:
     """
     Adds an event to a task
@@ -303,8 +301,8 @@ async def remove_event_from_task(task: Task, event_name: str) -> Task:
 
 async def get_total_nb_of_tasks(
     project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
-) -> Optional[int]:
+    filters: ProjectDataFilters | None = None,
+) -> int | None:
     """
     Get the total number of tasks of a project.
     """
@@ -351,8 +349,8 @@ async def get_total_nb_of_tasks(
 
 async def label_sentiment_analysis(
     project_id: str,
-    score_threshold: Optional[float] = None,
-    magnitude_threshold: Optional[float] = None,
+    score_threshold: float | None = None,
+    magnitude_threshold: float | None = None,
 ) -> None:
     """
     Label sentiment analysis for a project.
@@ -414,14 +412,14 @@ async def label_sentiment_analysis(
 
 async def get_all_tasks(
     project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
+    filters: ProjectDataFilters | None = None,
     get_events: bool = True,
     get_tests: bool = False,  # Unused, always False
     validate_metadata: bool = False,
-    limit: Optional[int] = None,
-    pagination: Optional[Pagination] = None,
-    sorting: Optional[List[Sorting]] = None,
-) -> List[Task]:
+    limit: int | None = None,
+    pagination: Pagination | None = None,
+    sorting: list[Sorting] | None = None,
+) -> list[Task]:
     """
     Get all the tasks of a project.
     """
@@ -513,14 +511,14 @@ async def get_all_tasks(
 
 async def fetch_flattened_tasks(
     project_id: str,
-    limit: Optional[int] = 1000,
-    pagination: Optional[Pagination] = None,
+    limit: int | None = 1000,
+    pagination: Pagination | None = None,
     with_events: bool = True,
     with_sessions: bool = True,
     keep_removed_events: bool = False,
     sort_get_most_recent: bool = True,
-    filters: Optional[ProjectDataFilters] = None,
-) -> List[FlattenedTask]:
+    filters: ProjectDataFilters | None = None,
+) -> list[FlattenedTask]:
     """
     Get a flattened representation of the tasks of a project for analytics.
 
@@ -678,7 +676,7 @@ async def fetch_flattened_tasks(
 async def update_from_flattened_tasks(
     org_id: str,
     project_id: str,
-    flattened_tasks: List[FlattenedTask],
+    flattened_tasks: list[FlattenedTask],
 ) -> bool:
     """
     Update the tasks of a project from a flattened representation.
@@ -708,9 +706,7 @@ async def update_from_flattened_tasks(
         .to_list(length=2)
     )
     # Compute the intersection of the project_ids
-    project_ids_in_db = set(
-        [project_id["project_id"] for project_id in project_ids_in_db]
-    )
+    project_ids_in_db = {project_id["project_id"] for project_id in project_ids_in_db}
     # If the intersection is not empty, it means that the task_id belong to another project
     if project_ids_in_db - {project_id} != set():
         raise HTTPException(
@@ -721,7 +717,7 @@ async def update_from_flattened_tasks(
     # A single row is a combination of task x event x eval
     # TODO : Infer the granularity from the available non-None columns
 
-    task_update: Dict[str, Dict[str, object]] = defaultdict(dict)
+    task_update: dict[str, dict[str, object]] = defaultdict(dict)
     eval_create_statements = []
     for task in flattened_tasks:
         if getattr(task, "task_metadata") is not None:

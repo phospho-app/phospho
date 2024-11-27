@@ -1,11 +1,8 @@
-from typing import Dict, List, Optional
-
-from phospho_backend.api.platform.models.explore import ClusteringEmbeddingCloud
-from phospho_backend.db.mongo import get_mongo_db
 from fastapi import HTTPException
 from loguru import logger
-
 from phospho.models import Cluster, Clustering
+from phospho_backend.api.platform.models.explore import ClusteringEmbeddingCloud
+from phospho_backend.db.mongo import get_mongo_db
 
 
 async def rename_clustering(project_id: str, clustering_id: str, new_name: str):
@@ -25,7 +22,7 @@ async def rename_clustering(project_id: str, clustering_id: str, new_name: str):
 
 async def get_date_last_clustering_timestamp(
     project_id: str,
-) -> Optional[int]:
+) -> int | None:
     """
     Get the timestamp date of the last clustering for a given project.
     """
@@ -46,7 +43,7 @@ async def get_date_last_clustering_timestamp(
 
 async def get_last_clustering_composition(
     project_id: str,
-) -> Optional[List[Dict[str, object]]]:
+) -> list[dict[str, object]] | None:
     """
     Get the composition of the last clustering for a given project.
     """
@@ -81,7 +78,7 @@ async def fetch_all_clusterings(
     project_id: str,
     limit: int = 100,
     with_cluster_names: bool = True,
-) -> List[Clustering]:
+) -> list[Clustering]:
     """
     Fetch all the clusterings of a project. The clusterings are sorted by creation date.
 
@@ -89,7 +86,7 @@ async def fetch_all_clusterings(
     """
     mongo_db = await get_mongo_db()
 
-    pipeline: List[Dict[str, object]] = [
+    pipeline: list[dict[str, object]] = [
         {"$match": {"project_id": project_id}},
     ]
     if with_cluster_names:
@@ -122,8 +119,8 @@ async def fetch_all_clusterings(
 
 
 async def fetch_all_clusters(
-    project_id: str, clustering_id: Optional[str] = None, limit: int = 100
-) -> List[Cluster]:
+    project_id: str, clustering_id: str | None = None, limit: int = 100
+) -> list[Cluster]:
     """
     Fetch the clusters of a project.
 
@@ -158,7 +155,7 @@ async def fetch_all_clusters(
     return valid_clusters
 
 
-async def fetch_single_cluster(project_id: str, cluster_id: str) -> Optional[Cluster]:
+async def fetch_single_cluster(project_id: str, cluster_id: str) -> Cluster | None:
     """
     Fetch a single cluster from a project
     """
@@ -186,7 +183,7 @@ async def compute_cloud_of_clusters(
 
     mongo_db = await get_mongo_db()
     collection_name = "private-clusterings"
-    pipeline: List[Dict[str, object]] = [
+    pipeline: list[dict[str, object]] = [
         {
             "$match": {
                 "project_id": project_id,
@@ -287,7 +284,7 @@ async def get_clustering_by_id(
     """
     mongo_db = await get_mongo_db()
     collection_name = "private-clusterings"
-    pipeline: List[Dict[str, object]] = [
+    pipeline: list[dict[str, object]] = [
         {
             "$match": {
                 "project_id": project_id,

@@ -1,21 +1,21 @@
-import time
-import json
-import uuid
-import logging
-import pydantic
 import datetime
-
+import json
+import logging
+import time
+import uuid
+from random import choice
 from typing import (
     Any,
-    Dict,
     AsyncGenerator,
-    Generator,
     Callable,
+    Dict,
+    Generator,
     Literal,
     Optional,
     Union,
 )
-from random import choice
+
+import pydantic
 
 logger = logging.getLogger(__name__)
 

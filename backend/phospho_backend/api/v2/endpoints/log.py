@@ -1,25 +1,24 @@
 import sys
-from typing import List, Union
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 from pydantic import ValidationError
 
 from phospho_backend.api.v2.models import (
+    LogError,
     LogEvent,
     LogReply,
     LogRequest,
-    LogError,
 )
+from phospho_backend.core import config
 from phospho_backend.security import (
     authenticate_org_key,
-    verify_propelauth_org_owns_project_id,
     get_quota,
+    verify_propelauth_org_owns_project_id,
 )
-from phospho_backend.services.mongo.emails import send_quota_exceeded_email
-from phospho_backend.core import config
 from phospho_backend.services.log import create_task_and_process_logs
-
+from phospho_backend.services.mongo.emails import send_quota_exceeded_email
 
 router = APIRouter(tags=["Logs"])
 
@@ -33,7 +32,7 @@ async def store_batch_of_log_events(
     project_id: str,
     log_request: LogRequest,
     background_tasks: BackgroundTasks,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ) -> LogReply:
     """Store the batched_log_events in the logs database"""
 
@@ -51,7 +50,7 @@ async def store_batch_of_log_events(
     # raise_error_if_not_in_pro_tier(org)
 
     # We return the valid log events
-    logged_events: List[Union[LogEvent, LogError]] = []
+    logged_events: list[LogEvent | LogError] = []
 
     usage_quota = await get_quota(project_id)
     current_usage = usage_quota.current_usage
@@ -60,8 +59,8 @@ async def store_batch_of_log_events(
     logger.info(
         f"Project {project_id} received {len(log_request.batched_log_events)} logs"
     )
-    logs_to_process: List[LogEvent] = []
-    extra_logs_to_save: List[LogEvent] = []
+    logs_to_process: list[LogEvent] = []
+    extra_logs_to_save: list[LogEvent] = []
 
     for log_event_model in log_request.batched_log_events:
         # We now validate the logs
@@ -123,7 +122,7 @@ async def store_batch_of_log_events(
         logs_to_process=logs_to_process,
         extra_logs_to_save=extra_logs_to_save,
         project_id=project_id,
-        org_id=org["org"].get("org_id"),
+        org_id=org.org.org_id,
     )
 
     return log_reply

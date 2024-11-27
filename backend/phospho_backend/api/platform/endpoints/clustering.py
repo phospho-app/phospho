@@ -1,14 +1,14 @@
 from asyncio.log import logger
-from phospho_backend.services.mongo.clustering import rename_clustering
+
 from fastapi import APIRouter, Depends
 from propelauth_fastapi import User  # type: ignore
 
+from phospho_backend.api.platform.models import RenameClusteringRequest
 from phospho_backend.security.authentification import (
     propelauth,
     verify_if_propelauth_user_can_access_project,
 )
-
-from phospho_backend.api.platform.models import RenameClusteringRequest
+from phospho_backend.services.mongo.clustering import rename_clustering
 
 router = APIRouter(tags=["clustering"])
 

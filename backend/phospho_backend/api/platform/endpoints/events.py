@@ -1,27 +1,27 @@
-from phospho_backend.services.mongo.recipes import (
-    get_recipe_from_event_definition_id,
-    run_recipe_on_tasks_batched,
-)
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
 from propelauth_fastapi import User  # type: ignore
 
 from phospho_backend.api.platform.models import (
-    EventBackfillRequest,
     Event,
+    EventBackfillRequest,
     LabelRequest,
     ScoreRequest,
 )
+from phospho_backend.core import config
 from phospho_backend.security.authentification import (
     propelauth,
     verify_if_propelauth_user_can_access_project,
 )
 from phospho_backend.services.mongo.events import (
-    confirm_event,
     change_label_event,
     change_value_event,
+    confirm_event,
 )
-from phospho_backend.core import config
+from phospho_backend.services.mongo.recipes import (
+    get_recipe_from_event_definition_id,
+    run_recipe_on_tasks_batched,
+)
 
 router = APIRouter(tags=["Events"])
 

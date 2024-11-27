@@ -1,11 +1,10 @@
-from typing import Optional
+import pandas as pd  # type: ignore
+from loguru import logger
 from phospho_backend.services.universal_loader.llm_functions import (
     openai_converter,
     phospho_converter,
     user_assistant_converter,
 )
-from loguru import logger
-import pandas as pd  # type: ignore
 
 
 def converter_openai_phospho(df: pd.DataFrame) -> pd.DataFrame:
@@ -51,7 +50,7 @@ def converter_openai_phospho(df: pd.DataFrame) -> pd.DataFrame:
     return tasks_df
 
 
-async def universal_loader(tasks_df: pd.DataFrame) -> Optional[pd.DataFrame]:
+async def universal_loader(tasks_df: pd.DataFrame) -> pd.DataFrame | None:
     """
     This function is a universal loader that takes a DataFrame as input and returns a Dataframe with the Phospho format.
 

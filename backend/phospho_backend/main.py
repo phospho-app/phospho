@@ -1,11 +1,11 @@
 import logging
 from urllib.parse import urlparse
 
+import phospho
 import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-import phospho
 from phospho_backend.api.platform import endpoints as platform_endpoints
 from phospho_backend.api.v2 import endpoints as v2_endpoints
 from phospho_backend.api.v3 import endpoints as v3_endpoints

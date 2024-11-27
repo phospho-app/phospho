@@ -1,12 +1,12 @@
 import os
-import pytest
+
 import pymongo
+import pytest
 from loguru import logger
 
 import extractor.core.config as config
 from extractor.db.models import Project, Task
 from extractor.db.mongo import close_mongo_db, connect_and_init_db, get_mongo_db
-
 from tests.utils import cleanup
 
 assert config.ENVIRONMENT != "production"

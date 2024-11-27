@@ -3,9 +3,10 @@ A script to populate a project with some data
 """
 
 import os
+from typing import List
+
 import phospho
 from dotenv import load_dotenv
-from typing import List
 from openai import OpenAI
 
 load_dotenv("../backend/.env")

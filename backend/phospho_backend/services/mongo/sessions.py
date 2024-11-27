@@ -1,19 +1,18 @@
-from typing import List, Literal, Optional, cast
+from typing import Literal, cast
 
+from fastapi import HTTPException
+from loguru import logger
+from phospho.lab.language_models import get_provider_and_model, get_sync_client
+from phospho.models import ProjectDataFilters, ScoreRange
+from phospho.utils import is_jsonable
 from phospho_backend.api.platform.models.explore import Pagination, Sorting
 from phospho_backend.db.models import Event, EventDefinition, Session, Task
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.services.mongo.query_builder import QueryBuilder
-from fastapi import HTTPException
-from loguru import logger
-
-from phospho.models import ProjectDataFilters, ScoreRange
-from phospho.utils import is_jsonable
-from phospho.lab.language_models import get_provider_and_model, get_sync_client
 
 
 async def create_session(
-    project_id: str, org_id: str, data: Optional[dict] = None
+    project_id: str, org_id: str, data: dict | None = None
 ) -> Session:
     """
     Create a new session
@@ -52,7 +51,7 @@ async def get_session_by_id(session_id: str) -> Session:
 
 async def fetch_session_tasks(
     project_id: str, session_id: str, limit: int = 1000
-) -> List[Task]:
+) -> list[Task]:
     """
     Fetch all tasks for a given session id.
     """
@@ -162,7 +161,7 @@ async def compute_session_length(project_id: str):
 
 
 async def compute_task_position(
-    project_id: str, filters: Optional[ProjectDataFilters] = None
+    project_id: str, filters: ProjectDataFilters | None = None
 ):
     """
     Executes an aggregation pipeline to compute the task position for each task.
@@ -305,8 +304,8 @@ For reference, here are the existing tags in this project:
 async def add_event_to_session(
     session: Session,
     event: EventDefinition,
-    score_range_value: Optional[float] = None,
-    score_category_label: Optional[str] = None,
+    score_range_value: float | None = None,
+    score_category_label: str | None = None,
     event_source: str = "owner",
 ) -> Session:
     """
@@ -424,12 +423,12 @@ async def human_eval_session(
 async def get_all_sessions(
     project_id: str,
     limit: int = 1000,
-    filters: Optional[ProjectDataFilters] = None,
+    filters: ProjectDataFilters | None = None,
     get_events: bool = True,
     get_tasks: bool = False,
-    pagination: Optional[Pagination] = None,
-    sorting: Optional[List[Sorting]] = None,
-) -> List[Session]:
+    pagination: Pagination | None = None,
+    sorting: list[Sorting] | None = None,
+) -> list[Session]:
     """
     Fetch all the sessions of a project.
     """

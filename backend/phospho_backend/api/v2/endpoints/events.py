@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 from phospho_backend.api.v2.models import (
-    EventDetectionReply,
-    DetectEventsInTaskRequest,
-    Task,
     DetectEventInMessagesRequest,
+    DetectEventsInTaskRequest,
+    EventDetectionReply,
+    Task,
 )
 from phospho_backend.security import (
     authenticate_org_key,
@@ -12,7 +13,6 @@ from phospho_backend.security import (
 )
 from phospho_backend.security.authentification import raise_error_if_not_in_pro_tier
 from phospho_backend.services.mongo.extractor import ExtractorClient
-
 
 router = APIRouter(tags=["Events"])
 
@@ -25,7 +25,7 @@ router = APIRouter(tags=["Events"])
 async def post_detect_events_in_task(
     project_id: str,
     event_detection_request: DetectEventsInTaskRequest,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ) -> EventDetectionReply:
     """
     Detect events in a Task
@@ -34,11 +34,9 @@ async def post_detect_events_in_task(
     raise_error_if_not_in_pro_tier(org)
 
     task = Task(**event_detection_request.model_dump())
-    extractor_client = (
-        ExtractorClient(
-            project_id=project_id,
-            org_id=org["org"].org_id,
-        ),
+    extractor_client = ExtractorClient(
+        project_id=project_id,
+        org_id=org.org.org_id,
     )
     pipeline_results = await extractor_client.run_main_pipeline_on_task(task)
 
@@ -56,7 +54,7 @@ async def post_detect_events_in_task(
 async def post_detect_events_in_messages_list(
     project_id: str,
     event_detection_request: DetectEventInMessagesRequest,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ) -> EventDetectionReply:
     """
     Detect events in a list of messages.
@@ -68,7 +66,7 @@ async def post_detect_events_in_messages_list(
 
     extractor_client = ExtractorClient(
         project_id=project_id,
-        org_id=org["org"].org_id,
+        org_id=org.org.org_id,
     )
     pipeline_results = await extractor_client.run_main_pipeline_on_messages(
         event_detection_request.messages

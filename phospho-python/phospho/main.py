@@ -1,12 +1,13 @@
 import imp
 import os
 import os.path
+from enum import Enum
 from typing import Optional, Tuple
 
 import typer
 from rich import print
 from typing_extensions import Annotated
-from enum import Enum
+
 from ._version import __version__
 
 app = typer.Typer()

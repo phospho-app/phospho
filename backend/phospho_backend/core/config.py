@@ -7,11 +7,9 @@ import os
 from base64 import b64decode
 
 from dotenv import load_dotenv
-from google.oauth2 import service_account
 from google.cloud.storage import Client  # type: ignore
-
+from google.oauth2 import service_account
 from loguru import logger
-
 
 load_dotenv()  # take environment variables from .env.
 logger.info("Loading environment variables from .env file")
@@ -59,14 +57,6 @@ if ENVIRONMENT == "test":
     PHOSPHO_ORG_ID = "3fe248a3-834c-4c26-8dcc-4e55112f702d"
 else:
     PHOSPHO_ORG_ID = "13b5f728-21a5-481d-82fa-0241ca0e07b9"
-
-### EXTRACTOR (phospho service) ###
-EXTRACTOR_SECRET_KEY = os.getenv("EXTRACTOR_SECRET_KEY")
-EXTRACTOR_URL = os.getenv("EXTRACTOR_URL")
-# TODO: move this to a startup check
-assert (
-    EXTRACTOR_URL is not None
-), "EXTRACTOR_URL is missing from the environment variables"
 
 ### PHOSPHO AI HUB ###
 PHOSPHO_AI_HUB_URL = os.getenv("PHOSPHO_AI_HUB_URL", None)

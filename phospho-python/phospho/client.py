@@ -12,8 +12,8 @@ import phospho.config as config
 from phospho.models import (
     FlattenedTask,
     Project,
-    Task,
     ProjectDataFilters,
+    Task,
 )
 from phospho.sessions import SessionCollection
 from phospho.tasks import TaskCollection, TaskEntity

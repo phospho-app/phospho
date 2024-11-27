@@ -1,19 +1,20 @@
-from typing import Dict, List, Literal, Optional, Union
+from typing import Literal
+
 from phospho_backend.api.v3.models.run import RoleContentMessage
+from phospho_backend.utils import generate_timestamp, generate_uuid
 from pydantic import BaseModel, Field
-from phospho_backend.utils import generate_uuid, generate_timestamp
 
 
 class MinimalLogEventForMessages(BaseModel, extra="allow"):
     session_id: str = Field(default_factory=generate_uuid)
-    messages: List[RoleContentMessage] = Field(default_factory=list)
+    messages: list[RoleContentMessage] = Field(default_factory=list)
     merge_mode: Literal["resolve", "append", "replace"] = "replace"
     created_at: int = Field(default_factory=generate_timestamp)
-    metadata: Optional[Dict[str, object]] = None
-    version_id: Optional[str] = None
-    user_id: Optional[str] = None
-    flag: Optional[Literal["success", "failure"]] = None
-    test_id: Optional[str] = None
+    metadata: dict[str, object] | None = None
+    version_id: str | None = None
+    user_id: str | None = None
+    flag: Literal["success", "failure"] | None = None
+    test_id: str | None = None
 
 
 class LogError(BaseModel):
@@ -22,8 +23,8 @@ class LogError(BaseModel):
 
 class LogRequest(BaseModel):
     project_id: str
-    batched_log_events: List[MinimalLogEventForMessages]
+    batched_log_events: list[MinimalLogEventForMessages]
 
 
 class LogReply(BaseModel):
-    logged_events: List[Union[MinimalLogEventForMessages, LogError]]
+    logged_events: list[MinimalLogEventForMessages | LogError]

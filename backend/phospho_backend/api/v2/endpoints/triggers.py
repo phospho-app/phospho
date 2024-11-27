@@ -1,18 +1,19 @@
 import time
+
+from fastapi import APIRouter, Header, Request
+from fastapi_simple_rate_limiter import rate_limiter  # type: ignore
+from loguru import logger
+from phospho.models import Task
+
 from phospho_backend.api.v2.models.triggers import TriggerClusteringRequest
 from phospho_backend.core import config
+from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.services.integrations.postgresql import (
     PostgresqlCredentials,
     PostgresqlIntegration,
 )
+from phospho_backend.services.mongo.ai_hub import AIHubClient, ClusteringRequest
 from phospho_backend.services.mongo.projects import get_project_by_id
-from fastapi import APIRouter, Header, Request
-from fastapi_simple_rate_limiter import rate_limiter  # type: ignore
-from phospho_backend.services.mongo.ai_hub import AIHubClient
-from phospho_backend.services.mongo.ai_hub import ClusteringRequest
-from loguru import logger
-from phospho_backend.db.mongo import get_mongo_db
-from phospho.models import Task
 from phospho_backend.services.mongo.triggers import aggregate_tasks_into_sessions
 
 router = APIRouter(tags=["Trigger"])

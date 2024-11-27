@@ -1,3 +1,15 @@
+import argilla as rg  # type: ignore
+import pandas as pd
+from argilla import FeedbackDataset
+from loguru import logger
+from phospho.models import Event
+from phospho_backend.api.platform.models.integrations import (
+    DatasetCreationRequest,
+    DatasetPullRequest,
+    DatasetSamplingParameters,
+)
+from phospho_backend.core import config
+from phospho_backend.db.models import Task
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.services.mongo.events import (
     change_label_event,
@@ -7,24 +19,9 @@ from phospho_backend.services.mongo.events import (
     get_last_event_for_task,
     remove_event,
 )
-import argilla as rg  # type: ignore
-import pandas as pd
-from phospho_backend.api.platform.models.integrations import (
-    DatasetCreationRequest,
-    DatasetPullRequest,
-    DatasetSamplingParameters,
-)
 from phospho_backend.services.mongo.projects import get_project_by_id
-from loguru import logger
-from phospho_backend.core import config
-from argilla import FeedbackDataset
-from phospho_backend.utils import health_check
-from typing import Dict, List, Union
-from phospho_backend.db.models import Task
 from phospho_backend.services.mongo.tasks import get_all_tasks
-from phospho_backend.utils import generate_valid_name
-
-from phospho.models import Event
+from phospho_backend.utils import generate_valid_name, health_check
 
 # Connect to argilla
 try:
@@ -49,7 +46,7 @@ def check_health_argilla() -> None:
             logger.error(f"Argilla server is not reachable at url {config.ARGILLA_URL}")
 
 
-def get_workspace_datasets(workspace_id: str) -> List[FeedbackDataset]:
+def get_workspace_datasets(workspace_id: str) -> list[FeedbackDataset]:
     """
     Get the datasets of a workspace
     """
@@ -135,8 +132,8 @@ def get_datasets_name(workspace_id: str, project_id: str) -> list[str]:
 
 
 def sample_tasks(
-    tasks: List[Task], sampling_params: DatasetSamplingParameters
-) -> List[Task]:
+    tasks: list[Task], sampling_params: DatasetSamplingParameters
+) -> list[Task]:
     if sampling_params.sampling_type == "naive":
         return tasks
 
@@ -162,7 +159,7 @@ async def generate_dataset_from_project(
     # Get the labels from the project settings
     # By default project.settings.events is {}
     taggers = {}
-    scorers: Dict[str, List[int]] = {}
+    scorers: dict[str, list[int]] = {}
     classifiers = {}
     metadata_properties = [
         rg.TermsMetadataProperty(
@@ -353,7 +350,7 @@ async def generate_dataset_from_project(
         # Build the pandas dataframe
         df_records = []
         for task in tasks:
-            df_record: Dict[str, object] = {
+            df_record: dict[str, object] = {
                 "user_input": task.input if task.input is not None else "",
                 "assistant_output": task.output if task.output is not None else "",
                 "task_id": task.id,
@@ -528,7 +525,7 @@ async def pull_dataset_from_argilla(
             event_definition = await get_event_definition_from_event_id(
                 project_id=pull_request.project_id, event_id=event_definition_id
             )
-            corrected_label_or_value: Union[str, float] = (
+            corrected_label_or_value: str | float = (
                 record.responses[0].values[classifier_or_scorer].value
             )
 

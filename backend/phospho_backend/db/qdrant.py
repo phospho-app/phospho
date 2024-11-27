@@ -1,8 +1,8 @@
+from loguru import logger
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http import models
-from phospho_backend.core import config
-from loguru import logger
 
+from phospho_backend.core import config
 
 qdrant_db = None
 

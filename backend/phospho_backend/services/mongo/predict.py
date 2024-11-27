@@ -1,11 +1,11 @@
-from typing import List, Any, Optional
-from phospho_backend.services.mongo.extractor import bill_on_stripe
-from phospho_backend.db.mongo import get_mongo_db
-from phospho_backend.db.models import JobResult
-from loguru import logger
-import tiktoken
+from typing import Any
 
+import tiktoken
+from loguru import logger
 from phospho.lab.models import ResultType
+from phospho_backend.db.models import JobResult
+from phospho_backend.db.mongo import get_mongo_db
+from phospho_backend.services.mongo.extractor import bill_on_stripe
 
 encoding = tiktoken.get_encoding("cl100k_base")
 
@@ -27,9 +27,9 @@ async def bill_input_and_output_tokens(
 async def metered_prediction(
     org_id: str,
     model_id: str,
-    inputs: List[Any],
-    predictions: List[Any],
-    project_id: Optional[str] = None,
+    inputs: list[Any],
+    predictions: list[Any],
+    project_id: str | None = None,
     bill: bool = True,
 ) -> None:
     """

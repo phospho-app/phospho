@@ -1,12 +1,12 @@
 from typing import List, Optional
+
 from loguru import logger
-from phospho.models import Task, ProjectDataFilters
-
-from ai_hub.models.clusterings import Clustering
-from ai_hub.db.mongo import get_mongo_db
-from ai_hub.core import config
-
+from phospho.models import ProjectDataFilters, Task
 from phospho_backend.services.mongo.query_builder import QueryBuilder
+
+from ai_hub.core import config
+from ai_hub.db.mongo import get_mongo_db
+from ai_hub.models.clusterings import Clustering
 
 
 async def load_tasks(

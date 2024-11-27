@@ -9,12 +9,12 @@ from langfuse import Langfuse  # type: ignore
 from langfuse.client import ObservationsViews  # type: ignore
 from loguru import logger
 
-from extractor.models import LogEventForTasks
 from extractor.core import config
 from extractor.db.mongo import get_mongo_db
+from extractor.models import LogEventForTasks
 from extractor.services.connectors.base import BaseConnector
-from extractor.services.projects import get_project_by_id
 from extractor.services.log.tasks import process_logs_for_tasks
+from extractor.services.projects import get_project_by_id
 
 
 class LangfuseConnector(BaseConnector):

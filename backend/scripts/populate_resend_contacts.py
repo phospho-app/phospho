@@ -1,10 +1,9 @@
 import os
 
 import resend
+from dotenv import load_dotenv
 from loguru import logger
 from propelauth_fastapi import init_auth  # type: ignore
-
-from dotenv import load_dotenv
 from tqdm import tqdm
 
 load_dotenv()

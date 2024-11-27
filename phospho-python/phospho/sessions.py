@@ -2,11 +2,10 @@
 Access sessions
 """
 
+from typing import Dict, Optional
+
 from phospho.collection import Collection
-
 from phospho.tasks import TaskEntity
-
-from typing import Optional, Dict
 
 
 class Session:

@@ -1,9 +1,7 @@
 from .authentification import (
     authenticate_org_key,
-    verify_propelauth_org_owns_project_id,
-    verify_if_propelauth_user_can_access_project,
     propelauth,
+    verify_if_propelauth_user_can_access_project,
+    verify_propelauth_org_owns_project_id,
 )
-
-
-from .authorization import get_quota, authorize_main_pipeline, get_quota_for_org
+from .authorization import authorize_main_pipeline, get_quota, get_quota_for_org

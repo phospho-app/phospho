@@ -1,20 +1,19 @@
+from phospho.models import ProjectDataFilters
 from pydantic import BaseModel, Field
-from typing import Optional, List
 
 from phospho_backend.db.models import EventDefinition
-from phospho.models import ProjectDataFilters
 
 
 class OnboardingSurvey(BaseModel):
-    code: Optional[str] = None
-    customer: Optional[str] = None
-    custom_customer: Optional[str] = None
-    contact: Optional[str] = None
-    custom_contact: Optional[str] = None
+    code: str | None = None
+    customer: str | None = None
+    custom_customer: str | None = None
+    contact: str | None = None
+    custom_contact: str | None = None
 
 
 class AddEventsQuery(BaseModel):
-    events: List[EventDefinition]
+    events: list[EventDefinition]
 
 
 class UploadTasksRequest(BaseModel):

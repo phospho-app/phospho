@@ -1,18 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
-from loguru import logger
 import tiktoken
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from loguru import logger
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 from phospho_backend.api.v2.models import (
     EmbeddingRequest,
+    EmbeddingResponse,
     EmbeddingResponseData,
     EmbeddingUsage,
-    EmbeddingResponse,
 )
-from phospho_backend.services.mongo.predict import metered_prediction
 from phospho_backend.core import config
-from phospho_backend.services.mongo.ai_hub import AIHubClient
-
 from phospho_backend.security import authenticate_org_key
+from phospho_backend.services.mongo.ai_hub import AIHubClient
+from phospho_backend.services.mongo.predict import metered_prediction
 
 router = APIRouter(tags=["embeddings"])
 
@@ -27,10 +27,10 @@ encoding = tiktoken.get_encoding("cl100k_base")
 async def post_embeddings(
     background_tasks: BackgroundTasks,
     request_body: EmbeddingRequest,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ):
-    org_metadata = org["org"].get("metadata", {})
-    org_id = org["org"]["org_id"]
+    org_metadata = org.org.metadata or {}
+    org_id = org.org.org_id
 
     # Check if the organization has a payment method
     customer_id = None

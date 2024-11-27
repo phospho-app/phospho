@@ -1,24 +1,22 @@
-from typing import Dict, List, Optional
+import datetime as dt
+from collections import defaultdict
+from typing import cast
 
+from loguru import logger
+from phospho.models import ProjectDataFilters
 from phospho_backend.api.platform.models import Pagination, Sorting
 from phospho_backend.api.v2.models.projects import UserMetadata
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.services.mongo.query_builder import QueryBuilder
-import datetime as dt
-from typing import cast, Union
-from collections import defaultdict
-from loguru import logger
-
-from phospho.models import ProjectDataFilters
 
 
 async def fetch_users_metadata(
     project_id: str,
     filters: ProjectDataFilters,
-    sorting: Optional[List[Sorting]] = None,
-    pagination: Optional[Pagination] = None,
-    user_id_search: Optional[str] = None,
-) -> List[UserMetadata]:
+    sorting: list[Sorting] | None = None,
+    pagination: Pagination | None = None,
+    user_id_search: str | None = None,
+) -> list[UserMetadata]:
     """
     Get the user metadata.
 
@@ -107,7 +105,7 @@ async def fetch_users_metadata(
     # Override the created_at filters to filter by last_message_ts
     filter_last_message_ts_start = filters.created_at_start
     filter_last_message_ts_end = filters.created_at_end
-    secondary_filter: Dict[str, object] = {}
+    secondary_filter: dict[str, object] = {}
     if filter_last_message_ts_start is not None:
         secondary_filter["last_message_ts"] = {"$gte": filter_last_message_ts_start}
     if filter_last_message_ts_end is not None:
@@ -326,8 +324,8 @@ async def fetch_users_metadata(
 
 async def get_total_nb_of_users(
     project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
-) -> Optional[int]:
+    filters: ProjectDataFilters | None = None,
+) -> int | None:
     """
     Get the total number of unique users for a project.
     This is the number of unique user_id in the tasks.
@@ -363,9 +361,9 @@ async def get_total_nb_of_users(
 
 async def get_nb_users_messages(
     project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
-    limit: Optional[int] = None,
-) -> Optional[int]:
+    filters: ProjectDataFilters | None = None,
+    limit: int | None = None,
+) -> int | None:
     """
     Get the total number of messages sent by unique users for a project.
 
@@ -391,7 +389,7 @@ async def get_nb_users_messages(
     query_result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
     if len(query_result) == 0:
         return None
-    active_user_ids: List[str] = [user["_id"] for user in query_result]
+    active_user_ids: list[str] = [user["_id"] for user in query_result]
 
     # Then, we find how many messages these users sent in total, during their whole existence
     pipeline = [
@@ -416,8 +414,8 @@ async def get_nb_users_messages(
 
 async def get_user_retention(
     project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
-) -> Optional[List[Dict[str, Union[str, float]]]]:
+    filters: ProjectDataFilters | None = None,
+) -> list[dict[str, str | float]] | None:
     mongo_db = await get_mongo_db()
 
     if filters is None:
@@ -489,11 +487,11 @@ async def get_user_retention(
 
 
 def calculate_retention(
-    user_activities: List[Dict[str, int]],
+    user_activities: list[dict[str, int]],
     period_length: int,
     period_seconds: int,
     period_name: str,
-) -> List[dict]:
+) -> list[dict]:
     """
     Calculate retention metrics from raw user activity data.
 
@@ -517,7 +515,7 @@ def calculate_retention(
 
     # Count users active in each period
     total_users = len(user_activities)
-    period_dropoffs: Dict[int, int] = defaultdict(int)
+    period_dropoffs: dict[int, int] = defaultdict(int)
 
     # Calculate which period each user dropped off
     for user in user_activities:
@@ -549,8 +547,8 @@ def calculate_retention(
 
 async def get_average_nb_tasks_per_user(
     project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
-) -> Optional[float]:
+    filters: ProjectDataFilters | None = None,
+) -> float | None:
     mongo_db = await get_mongo_db()
 
     query_builder = QueryBuilder(
@@ -577,13 +575,13 @@ async def get_average_nb_tasks_per_user(
 
 async def get_users_aggregated_metrics(
     project_id: str,
-    metrics: Optional[List[str]] = None,
-    filters: Optional[ProjectDataFilters] = None,
+    metrics: list[str] | None = None,
+    filters: ProjectDataFilters | None = None,
 ):
     if metrics is None:
         metrics = []
 
-    output: Dict[str, object] = {}
+    output: dict[str, object] = {}
     if "nb_users" in metrics:
         total_nb_users = (
             await get_total_nb_of_users(

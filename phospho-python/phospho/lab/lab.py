@@ -23,18 +23,17 @@ import phospho.client as client
 import phospho.lab.job_library as job_library
 
 from .models import (
+    EvenConfigForRegex,
     EventConfig,
     EventConfigForKeywords,
-    EvenConfigForRegex,
+    EventDefinition,
     JobConfig,
     JobResult,
     Message,
-    ResultType,
-    EventDefinition,
     Project,
     Recipe,
+    ResultType,
 )
-
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

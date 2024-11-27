@@ -1,14 +1,15 @@
 import asyncio
-from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from loguru import logger
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 from phospho_backend.api.v2.models import (
     Task,
     TaskCreationRequest,
     TaskFlagRequest,
-    TaskUpdateRequest,
     TaskHumanEvalRequest,
+    TaskUpdateRequest,
 )
 from phospho_backend.core import config
 from phospho_backend.security.authentification import (
@@ -21,10 +22,9 @@ from phospho_backend.services.mongo.sessions import get_session_by_id
 from phospho_backend.services.mongo.tasks import (
     create_task,
     get_task_by_id,
-    update_task,
     human_eval_task,
+    update_task,
 )
-from loguru import logger
 
 router = APIRouter(tags=["Tasks"])
 
@@ -37,7 +37,7 @@ router = APIRouter(tags=["Tasks"])
 async def post_create_task(
     taskCreationRequest: TaskCreationRequest,
     background_tasks: BackgroundTasks,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ) -> Task:
     if taskCreationRequest.session_id is not None:
         session_data = await get_session_by_id(taskCreationRequest.session_id)
@@ -55,17 +55,14 @@ async def post_create_task(
             output=taskCreationRequest.output,
             additional_input=taskCreationRequest.additional_input,
             data=taskCreationRequest.data,
-            org_id=org["org"].get("org_id"),
+            org_id=org.org.org_id,
         )
         # Skip the pipeline if we are in test mode
         # This is because the background tasks hangs the test
         if config.ENVIRONMENT == "test" or config.MONGODB_NAME == "test":
             return task_data
         # Trigger the event detection pipeline asynchronously
-        extractor_client = ExtractorClient(
-            project_id=project_id,
-            org_id=org["org"].get("org_id"),
-        )
+        extractor_client = ExtractorClient(project_id=project_id, org_id=org.org.org_id)
         background_tasks.add_task(
             extractor_client.run_main_pipeline_on_task, task=task_data
         )
@@ -79,7 +76,9 @@ async def post_create_task(
     response_model=Task,
     description="Get a specific task",
 )
-async def get_task(task_id: str, org: dict = Depends(authenticate_org_key)) -> Task:
+async def get_task(
+    task_id: str, org: OrgApiKeyValidation = Depends(authenticate_org_key)
+) -> Task:
     # Get the task object
     # WARNING : user not authorized at this point
     task = await get_task_by_id(task_id)
@@ -96,7 +95,7 @@ async def get_task(task_id: str, org: dict = Depends(authenticate_org_key)) -> T
 async def post_flag_task(
     task_id: str,
     taskFlagRequest: TaskFlagRequest,
-    org: Optional[dict] = Depends(authenticate_org_key_no_exception),
+    org: OrgApiKeyValidation | None = Depends(authenticate_org_key_no_exception),
 ) -> Task:
     """
     Set the human evalutation of the task to be 'success' or 'failure'
@@ -123,7 +122,7 @@ async def post_flag_task(
 async def post_human_eval_task(
     task_id: str,
     taskHumanEvalRequest: TaskHumanEvalRequest,
-    org: Optional[dict] = Depends(authenticate_org_key_no_exception),
+    org: dict | None = Depends(authenticate_org_key_no_exception),
 ) -> Task:
     """
     Set the human evalutation of the task to be 'success' or 'failure'
@@ -182,7 +181,7 @@ async def post_human_eval_task(
 async def post_update_task(
     task_id: str,
     taskUpdateRequest: TaskUpdateRequest,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ) -> Task:
     """
     Edit the metadata of a task

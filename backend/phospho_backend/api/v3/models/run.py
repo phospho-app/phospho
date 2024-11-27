@@ -1,7 +1,6 @@
 from phospho.models import ProjectDataFilters
 from phospho.utils import generate_version_id
 from pydantic import BaseModel, Field
-from typing import List, Optional
 
 
 class RoleContentMessage(BaseModel, extra="allow"):
@@ -21,7 +20,7 @@ class RunPipelineOnMessagesRequest(BaseModel):
     """
 
     project_id: str = Field(..., description="The phospho project_id")
-    messages: List[RoleContentMessage] = Field(
+    messages: list[RoleContentMessage] = Field(
         default_factory=list,
         description="Ordered and continuous messages in a single session. Similar to the OpenAI api.",
     )
@@ -30,9 +29,9 @@ class RunPipelineOnMessagesRequest(BaseModel):
 class RunBacktestRequest(BaseModel):
     project_id: str = Field(description="The phospho project_id")
     system_prompt_template: str = Field(
-        description="The system prompt template. Templated variables can be passed in the format of \{variable\}.",
+        description=r"The system prompt template. Templated variables can be passed in the format of \{variable\}.",
     )
-    system_prompt_variables: Optional[dict] = Field(
+    system_prompt_variables: dict | None = Field(
         None, description="The system prompt variables as a dictionary."
     )
     provider_and_model: str = Field(
@@ -43,7 +42,7 @@ class RunBacktestRequest(BaseModel):
         default_factory=generate_version_id,
         description="A nickname for the candidate version, currently testing.",
     )
-    filters: Optional[ProjectDataFilters] = Field(
+    filters: ProjectDataFilters | None = Field(
         None,
         description="The filters to be applied to the project data. If None, no filters are applied.",
     )

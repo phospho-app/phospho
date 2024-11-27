@@ -1,16 +1,14 @@
 import time
-from temporalio import activity
 
 import stripe
 from ai_hub.core import config
-
-from ai_hub.models.stripe import BillOnStripeRequest
-from ai_hub.models.embeddings import EmbeddingRequest
 from ai_hub.models.clusterings import ClusteringRequest
-from ai_hub.services.embeddings import generate_embeddings, save_embedding
+from ai_hub.models.embeddings import EmbeddingRequest
+from ai_hub.models.stripe import BillOnStripeRequest
 from ai_hub.services.clusterings import generate_project_clustering
-
+from ai_hub.services.embeddings import generate_embeddings, save_embedding
 from loguru import logger
+from temporalio import activity
 
 
 @activity.defn(name="bill_on_stripe")

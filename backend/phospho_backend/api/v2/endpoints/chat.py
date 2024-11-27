@@ -1,39 +1,30 @@
-from typing import (
-    Any,
-    Dict,
-    Iterable,
-    List,
-    Literal,
-    Optional,
-    Union,
-    AsyncIterator,
-    Tuple,
-)
 import json
+from collections.abc import AsyncIterator, Iterable
+from typing import Any, Literal, cast
+
+import pydantic
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.requests import Request
 from fastapi.responses import StreamingResponse
 from fastapi_simple_rate_limiter import rate_limiter  # type: ignore
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
+from openai import AsyncOpenAI
 from openai.types.chat.chat_completion import (
     ChatCompletion,
     ChatCompletionMessage,
     Choice,
 )
 from openai.types.chat.chat_completion_chunk import ChatCompletionChunk
-from openai import AsyncOpenAI
+from phospho.lab.language_models import get_async_client, get_provider_and_model
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
+from phospho_backend.api.v2.models.log import LogEvent
 from phospho_backend.core import config
 from phospho_backend.security.authentification import authenticate_org_key
-from phospho_backend.services.mongo.predict import metered_prediction
-from phospho.lab.language_models import get_async_client, get_provider_and_model
-import pydantic
-
-from phospho_backend.services.mongo.projects import get_project_by_id
-from phospho_backend.services.mongo.organizations import create_project_by_org
 from phospho_backend.services.mongo.extractor import ExtractorClient
-from phospho_backend.api.v2.models.log import LogEvent
-from typing import cast
+from phospho_backend.services.mongo.organizations import create_project_by_org
+from phospho_backend.services.mongo.predict import metered_prediction
+from phospho_backend.services.mongo.projects import get_project_by_id
 
 router = APIRouter(tags=["chat"])
 
@@ -67,7 +58,7 @@ class FunctionDefinitionModel(pydantic.BaseModel):
     name: str
     description: str
     parameters: dict
-    strict: Optional[bool] = False
+    strict: bool | None = False
 
 
 class ChatCompletionToolParamModel(pydantic.BaseModel):
@@ -76,7 +67,7 @@ class ChatCompletionToolParamModel(pydantic.BaseModel):
 
 
 class CreateRequest(pydantic.BaseModel):
-    messages: List[ChatCompletionMessageParamModel]
+    messages: list[ChatCompletionMessageParamModel]
     model: Literal[
         "openai:gpt-4o",
         "openai:gpt-4o-mini",
@@ -85,26 +76,26 @@ class CreateRequest(pydantic.BaseModel):
         # Pointers for the tak service in API
         "phospho:tak-large",
     ]
-    frequency_penalty: Optional[float] | None = None
+    frequency_penalty: float | None | None = None
     # function_call: completion_create_params.FunctionCall | None = None
     # functions: Iterable[completion_create_params.Function] | None = None
-    logit_bias: Optional[Dict[str, int]] | None = None
-    logprobs: Optional[bool] | None = None
-    max_tokens: Optional[int] | None = None
-    n: Optional[int] | None = None
-    presence_penalty: Optional[float] | None = None
+    logit_bias: dict[str, int] | None | None = None
+    logprobs: bool | None | None = None
+    max_tokens: int | None | None = None
+    n: int | None | None = None
+    presence_penalty: float | None | None = None
     # response_format: completion_create_params.ResponseFormat | None = None
-    seed: Optional[int] | None = None
-    stop: Union[Optional[str], List[str]] | None = None
-    stream: Optional[bool] | None = None
+    seed: int | None | None = None
+    stop: str | None | list[str] | None = None
+    stream: bool | None | None = None
     # stream_options: Optional[ChatCompletionStreamOptionsParam] | None = None
-    temperature: Optional[float] | None = None
+    temperature: float | None | None = None
     tool_choice: (
-        Union[Literal["none", "auto", "required"], ChatCompletionToolParamModel] | None
+        Literal["none", "auto", "required"] | ChatCompletionToolParamModel | None
     ) = None
     tools: Iterable[ChatCompletionToolParamModel] | None = None
-    top_logprobs: Optional[int] | None = None
-    top_p: Optional[float] | None = None
+    top_logprobs: int | None | None = None
+    top_p: float | None | None = None
     user: str | None = None
     # extra_headers: Headers | None = None
     # extra_query: Query | None = None
@@ -181,8 +172,8 @@ async def log_to_project(
 
 
 async def stream_and_capture(
-    openai_client: AsyncOpenAI, query_inputs: Dict[str, Any]
-) -> AsyncIterator[Tuple[Union[ChatCompletionChunk, ChatCompletion], ChatCompletion]]:
+    openai_client: AsyncOpenAI, query_inputs: dict[str, Any]
+) -> AsyncIterator[tuple[ChatCompletionChunk | ChatCompletion, ChatCompletion]]:
     full_response = ChatCompletion(
         id="", choices=[], created=0, model="", object="chat.completion", usage=None
     )
@@ -269,7 +260,7 @@ async def create(
     request: Request,
     create_request: CreateRequest,
     background_tasks: BackgroundTasks,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ):  # Can be ChatCompletion or StreamingResponse
     """
     Generate a chat completion
@@ -279,8 +270,8 @@ async def create(
     """
     # Get customer_id
     logger.info(f"Received chat completions request for project {project_id}")
-    org_metadata = org["org"].get("metadata", {})
-    org_id = org["org"]["org_id"]
+    org_metadata = org.org.metadata or {}
+    org_id = org.org.org_id
     customer_id = None
 
     if "customer_id" in org_metadata.keys():

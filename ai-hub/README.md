@@ -54,7 +54,7 @@ TEMPORAL_NAMESPACE=default
 ```
 
 ```bash
-temporal server start-dev --db-filename your_temporal.db --ui-port 8080
+temporal server start-dev --db-filename your_temporal.db --ui-port 7999
 ```
 
 You can now run the worker in a second terminal with

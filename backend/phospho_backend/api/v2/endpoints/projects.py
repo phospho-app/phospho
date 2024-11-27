@@ -1,6 +1,5 @@
-from typing import Optional
-
 from fastapi import APIRouter, Depends
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 from phospho_backend.api.v2.models import (
     FlattenedTasks,
@@ -31,7 +30,7 @@ router = APIRouter(tags=["Projects"])
 async def get_sessions(
     project_id: str,
     limit: int = 1000,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ):
     await verify_propelauth_org_owns_project_id(org, project_id)
     sessions = await get_all_sessions(project_id, limit)
@@ -45,8 +44,8 @@ async def get_sessions(
 )
 async def post_tasks(
     project_id: str,
-    query: Optional[QuerySessionsTasksRequest] = None,
-    org: dict = Depends(authenticate_org_key),
+    query: QuerySessionsTasksRequest | None = None,
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ) -> Tasks:
     """
     Fetch all the tasks of a project.
@@ -78,7 +77,7 @@ async def post_tasks(
 async def get_flattened_tasks(
     project_id: str,
     flattened_tasks_request: FlattenedTasksRequest,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ) -> FlattenedTasks:
     """
     Get all the tasks of a project in a flattened format.
@@ -102,13 +101,13 @@ async def get_flattened_tasks(
 async def post_flattened_tasks(
     project_id: str,
     flattened_tasks: FlattenedTasks,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ) -> None:
     """
     Update the tasks of a project using a flattened format.
     """
     await verify_propelauth_org_owns_project_id(org, project_id)
-    org_id = org["org"].get("org_id")
+    org_id = org.org.org_id
 
     await update_from_flattened_tasks(
         org_id=org_id,

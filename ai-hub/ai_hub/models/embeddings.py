@@ -1,6 +1,8 @@
-from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
-from ai_hub.utils import generate_uuid, generate_timestamp
+
+from pydantic import BaseModel, Field
+
+from ai_hub.utils import generate_timestamp, generate_uuid
 
 
 class Embedding(BaseModel):

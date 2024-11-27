@@ -2,24 +2,23 @@ from fastapi import APIRouter, Depends, HTTPException
 from propelauth_fastapi import User  # type: ignore
 
 from phospho_backend.api.platform.models import (
+    AddEventRequest,
+    RemoveEventRequest,
     Session,
+    SessionHumanEvalRequest,
     SessionUpdateRequest,
     Tasks,
-    SessionHumanEvalRequest,
 )
 from phospho_backend.security import verify_if_propelauth_user_can_access_project
 from phospho_backend.security.authentification import propelauth
 from phospho_backend.services.mongo.sessions import (
+    add_event_to_session,
     edit_session_metadata,
+    event_suggestion,
     fetch_session_tasks,
     format_session_transcript,
     get_session_by_id,
-    event_suggestion,
     human_eval_session,
-)
-from phospho_backend.api.platform.models import AddEventRequest, RemoveEventRequest
-from phospho_backend.services.mongo.sessions import (
-    add_event_to_session,
     remove_event_from_session,
 )
 

@@ -1,18 +1,17 @@
-from typing import Dict, Literal, Optional, Union
 import random
+from typing import Dict, Literal, Optional, Union
 
+from loguru import logger
+from openai import AsyncOpenAI
+from phospho import lab
+from phospho.models import Session, Task
+from phospho.utils import shorten_text
+
+from ai_hub.core import config
 from ai_hub.models.clusterings import Cluster
 from ai_hub.models.embeddings import Embedding
 from ai_hub.models.progress_bar import ProgressBar
 from ai_hub.models.users import User
-from loguru import logger
-from openai import AsyncOpenAI
-from phospho import lab
-from phospho.utils import shorten_text
-from ai_hub.core import config
-
-
-from phospho.models import Session, Task
 
 openai_client = AsyncOpenAI(api_key=config.OPENAI_API_KEY)
 

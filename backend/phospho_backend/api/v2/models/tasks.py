@@ -1,50 +1,50 @@
-from pydantic import BaseModel
-from typing import List, Optional, Literal
+from typing import Literal
 
-from phospho_backend.db.models import Task, FlattenedTask
+from pydantic import BaseModel
 from pydantic.fields import Field
 
+from phospho_backend.db.models import FlattenedTask, Task
 from phospho_backend.utils import generate_uuid
 
 
 class Tasks(BaseModel):
-    tasks: List[Task]
+    tasks: list[Task]
 
 
 class TaskCreationRequest(BaseModel):
-    task_id: Optional[str] = Field(default_factory=generate_uuid)
-    session_id: Optional[str] = None
+    task_id: str | None = Field(default_factory=generate_uuid)
+    session_id: str | None = None
     input: str
-    additional_input: Optional[dict] = None
+    additional_input: dict | None = None
     output: str
-    additional_output: Optional[dict] = None
-    data: Optional[dict] = None
-    metadata: Optional[dict] = None
+    additional_output: dict | None = None
+    data: dict | None = None
+    metadata: dict | None = None
     project_id: str
-    flag: Optional[Literal["success", "failure"]] = None
+    flag: Literal["success", "failure"] | None = None
 
 
 class TaskFlagRequest(BaseModel):
-    flag: Optional[Literal["success", "failure"]] = None
-    source: Optional[str] = "owner"
-    notes: Optional[str] = None
-    project_id: Optional[str] = None
+    flag: Literal["success", "failure"] | None = None
+    source: str | None = "owner"
+    notes: str | None = None
+    project_id: str | None = None
 
 
 class TaskHumanEvalRequest(BaseModel):
-    human_eval: Optional[Literal["success", "failure"]] = None
-    project_id: Optional[str] = None
-    source: Optional[str] = "owner"
-    notes: Optional[str] = None
+    human_eval: Literal["success", "failure"] | None = None
+    project_id: str | None = None
+    source: str | None = "owner"
+    notes: str | None = None
 
 
 class TaskUpdateRequest(BaseModel):
-    metadata: Optional[dict] = None
-    data: Optional[dict] = None
-    notes: Optional[str] = None
-    flag: Optional[Literal["success", "failure"]] = None
-    flag_source: Optional[str] = None
+    metadata: dict | None = None
+    data: dict | None = None
+    notes: str | None = None
+    flag: Literal["success", "failure"] | None = None
+    flag_source: str | None = None
 
 
 class FlattenedTasks(BaseModel):
-    flattened_tasks: List[FlattenedTask]
+    flattened_tasks: list[FlattenedTask]

@@ -1,12 +1,10 @@
-from typing import Dict, List, Optional
-from loguru import logger
-from pydantic import BaseModel
-
-from phospho_backend.db.mongo import get_mongo_db
-from opentelemetry.proto.trace.v1.trace_pb2 import TracesData
-from google.protobuf.json_format import MessageToDict
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
+from google.protobuf.json_format import MessageToDict
+from loguru import logger
 from opentelemetry.proto.common.v1.common_pb2 import KeyValue
+from opentelemetry.proto.trace.v1.trace_pb2 import TracesData
+from phospho_backend.db.mongo import get_mongo_db
+from pydantic import BaseModel
 
 
 class StandardSpanModel(BaseModel):
@@ -14,9 +12,9 @@ class StandardSpanModel(BaseModel):
     project_id: str
     task_id: str
     session_id: str
-    metadata: Optional[dict] = None
+    metadata: dict | None = None
     #
-    propagate: Optional[bool] = None
+    propagate: bool | None = None
     #
     start_time_unix_nano: int
     end_time_unix_nano: int
@@ -109,7 +107,7 @@ class OpenTelemetryConnector:
         await self._dump(data)
 
         # List of all processed spans
-        all_spans: List[dict] = []
+        all_spans: list[dict] = []
 
         for resource in data.resource_spans:
             scope_spans = resource.scope_spans
@@ -197,7 +195,7 @@ class OpenTelemetryConnector:
 
 async def fetch_spans_for_task(
     project_id: str, task_id: str
-) -> List[StandardSpanModel]:
+) -> list[StandardSpanModel]:
     """
     Fetch all the spans linked to a task_id
     """

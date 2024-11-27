@@ -1,19 +1,20 @@
-from typing import Iterator, List, Optional
+from collections.abc import Iterator
+
+import phospho
+from loguru import logger
+from phospho_backend.api.v2.models import LogEvent
 from phospho_backend.services.mongo.extractor import ExtractorClient
 from phospho_backend.services.mongo.tasks import get_all_tasks
-from loguru import logger
-import phospho
-from phospho_backend.api.v2.models import LogEvent
 
 
 class BacktestLoader:
-    sampled_tasks: Optional[Iterator[phospho.lab.Message]]
+    sampled_tasks: Iterator[phospho.lab.Message] | None
     sample_size: int
 
     def __init__(
         self,
         project_id: str,
-        filters: Optional[phospho.models.ProjectDataFilters] = None,
+        filters: phospho.models.ProjectDataFilters | None = None,
     ):
         self.sampled_tasks = None
         self.project_id = project_id
@@ -29,7 +30,7 @@ class BacktestLoader:
             tasks = await get_all_tasks(
                 project_id=self.project_id, filters=self.filters
             )
-            messages: List[phospho.lab.Message] = []
+            messages: list[phospho.lab.Message] = []
             for task in tasks:
                 # Convert to a lab.Message
                 message = phospho.lab.Message(
@@ -76,7 +77,7 @@ async def run_backtests(
         org_id=org_id,
     )
 
-    async def run_model(message: phospho.lab.Message) -> Optional[str]:
+    async def run_model(message: phospho.lab.Message) -> str | None:
         system_prompt = system_prompt_template.format(**system_prompt_variables)
         response = await client.chat.completions.create(
             model=model,

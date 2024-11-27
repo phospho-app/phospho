@@ -1,9 +1,9 @@
-from phospho_backend.api.platform.models.metadata import (
-    MetadataPivotResponse,
-    MetadataPivotQuery,
-)
-from phospho_backend.api.platform.models import Users, QueryUserMetadataRequest
+from phospho_backend.api.platform.models import QueryUserMetadataRequest, Users
 from phospho_backend.api.platform.models.explore import Sorting
+from phospho_backend.api.platform.models.metadata import (
+    MetadataPivotQuery,
+    MetadataPivotResponse,
+)
 
 
 class AnalyticsQuery(MetadataPivotQuery):

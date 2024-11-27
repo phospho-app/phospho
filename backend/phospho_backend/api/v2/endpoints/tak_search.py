@@ -3,11 +3,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.requests import Request
 from fastapi_simple_rate_limiter import rate_limiter  # type: ignore
 from loguru import logger
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
-
+from phospho_backend.api.v2.models.tak_search import SearchRequest, SearchResponse
 from phospho_backend.core import config
 from phospho_backend.security import authenticate_org_key
-from phospho_backend.api.v2.models.tak_search import SearchRequest, SearchResponse
 
 router = APIRouter(tags=["tak-search"])
 
@@ -17,14 +17,14 @@ router = APIRouter(tags=["tak-search"])
 async def post_search(
     search_request: SearchRequest,
     request: Request,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ):
     """
     Retrieve chunks from a website for a given search query
 
 
     """
-    org_metadata = org["org"].get("metadata", {})
+    org_metadata = org.org.metadata or {}
 
     # Check that the org has access to the completion service
     if not org_metadata.get("has_tak_search_access", False):
@@ -37,7 +37,7 @@ async def post_search(
 
     # Log the request
     logger.info(
-        f"Search request from {org['org']['org_id']} for search_request: {search_request}"
+        f"Search request from {org.org.org_id} for search_request: {search_request}"
     )
 
     # Use HTTPX to call the tak search service

@@ -1,7 +1,7 @@
-from typing import Callable, Dict, Any, Optional
+from typing import Any, Callable, Dict, Optional
 
 try:
-    from langchain_core.callbacks import BaseCallbackHandler, AsyncCallbackHandler
+    from langchain_core.callbacks import AsyncCallbackHandler, BaseCallbackHandler
 
     class PhosphoLangchainCallbackHandler(BaseCallbackHandler):
         """Phospho callback handler for Langchain."""

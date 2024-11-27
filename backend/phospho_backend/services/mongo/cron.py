@@ -1,12 +1,12 @@
+from loguru import logger
 from phospho_backend.db.mongo import get_mongo_db
 from phospho_backend.security.authorization import get_quota
 from phospho_backend.services.integrations.postgresql import (
-    PostgresqlIntegration,
     PostgresqlCredentials,
+    PostgresqlIntegration,
 )
 from phospho_backend.services.mongo.extractor import ExtractorClient
 from phospho_backend.services.mongo.projects import get_project_by_id
-from loguru import logger
 
 
 async def fetch_projects_to_sync(type: str = "langsmith"):

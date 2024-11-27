@@ -1,6 +1,8 @@
 from typing import List, Optional
-from ai_hub.utils import generate_uuid
+
 from pydantic import BaseModel, Field
+
+from ai_hub.utils import generate_uuid
 
 
 class User(BaseModel):

@@ -5,14 +5,6 @@ from collections import defaultdict
 from typing import Dict, List, Optional, Tuple
 
 from loguru import logger
-
-from extractor.db.mongo import get_mongo_db
-from extractor.models import RoleContentMessage
-from extractor.services.data import fetch_previous_tasks
-from extractor.services.projects import get_project_by_id
-from extractor.services.sentiment_analysis import call_sentiment_and_language_api
-from extractor.services.webhook import trigger_webhook
-from extractor.utils import generate_uuid, get_most_common
 from phospho import lab
 from phospho.models import (
     Event,
@@ -28,6 +20,14 @@ from phospho.models import (
     SessionStats,
     Task,
 )
+
+from extractor.db.mongo import get_mongo_db
+from extractor.models import RoleContentMessage
+from extractor.services.data import fetch_previous_tasks
+from extractor.services.projects import get_project_by_id
+from extractor.services.sentiment_analysis import call_sentiment_and_language_api
+from extractor.services.webhook import trigger_webhook
+from extractor.utils import generate_uuid, get_most_common
 
 PHOSPHO_EVENT_MODEL_NAMES = ["phospho-6", "owner", "phospho-4"]
 PHOSPHO_EVAL_MODEL_NAMES = ["phospho", "phospho-4"]

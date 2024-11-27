@@ -1,6 +1,5 @@
-import pytest
 import phospho
-
+import pytest
 from openai import OpenAI
 
 

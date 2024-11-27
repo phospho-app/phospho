@@ -1,5 +1,8 @@
-from typing import List, Optional, Union
+from typing import Optional
 
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from loguru import logger
+from opentelemetry.proto.trace.v1.trace_pb2 import TracesData  # type: ignore
 from phospho_backend.api.v3.models.log import (
     LogError,
     LogReply,
@@ -15,10 +18,7 @@ from phospho_backend.security.authorization import get_quota_for_org
 from phospho_backend.services.integrations.opentelemetry import OpenTelemetryConnector
 from phospho_backend.services.mongo.emails import send_quota_exceeded_email
 from phospho_backend.services.mongo.extractor import ExtractorClient
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
-from loguru import logger
-from opentelemetry.proto.trace.v1.trace_pb2 import TracesData  # type: ignore
-
+from propelauth_py.types.user import OrgApiKeyValidation  # type: ignore
 
 router = APIRouter(tags=["Log"])
 
@@ -31,8 +31,8 @@ router = APIRouter(tags=["Log"])
 async def store_batch_of_log_events(
     log_request: LogRequest,
     background_tasks: BackgroundTasks,
-    org: dict = Depends(authenticate_org_key),
-) -> Optional[LogReply]:
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
+) -> LogReply | None:
     """Store the log_content in the logs database"""
 
     # Check if we are in maintenance mode
@@ -44,11 +44,11 @@ async def store_batch_of_log_events(
     await verify_propelauth_org_owns_project_id(org, log_request.project_id)
 
     # We return the valid log events
-    logged_events: List[Union[MinimalLogEventForMessages, LogError]] = []
-    logs_to_process: List[MinimalLogEventForMessages] = []
-    extra_logs_to_save: List[MinimalLogEventForMessages] = []
+    logged_events: list[MinimalLogEventForMessages | LogError] = []
+    logs_to_process: list[MinimalLogEventForMessages] = []
+    extra_logs_to_save: list[MinimalLogEventForMessages] = []
 
-    usage_quota = await get_quota_for_org(org["org"].get("org_id"))
+    usage_quota = await get_quota_for_org(org.org.org_id)
     current_usage = usage_quota.current_usage
     max_usage = usage_quota.max_usage
 
@@ -72,7 +72,7 @@ async def store_batch_of_log_events(
     # All the tasks to process were deemed as valid and the org had enough credits to process them
     extractor_client = ExtractorClient(
         project_id=log_request.project_id,
-        org_id=org["org"].get("org_id"),
+        org_id=org.org.org_id,
     )
     background_tasks.add_task(
         extractor_client.run_log_process_for_messages,
@@ -94,7 +94,7 @@ async def collect_opentelemetry_traces(
     project_id: str,
     request: Request,
     background_tasks: BackgroundTasks,
-    org: dict = Depends(authenticate_org_key),
+    org: OrgApiKeyValidation = Depends(authenticate_org_key),
 ):
     """
     This endpoint is used to log traces and intermediate LLM calls to phospho.
@@ -112,7 +112,7 @@ async def collect_opentelemetry_traces(
 
     connector = OpenTelemetryConnector(
         project_id=project_id,
-        org_id=org["org"].get("org_id"),
+        org_id=org.org.org_id,
     )
     background_tasks.add_task(
         connector.process,

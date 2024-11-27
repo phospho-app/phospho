@@ -2,22 +2,21 @@ import asyncio
 import string
 from typing import Dict, List, Literal, Optional, Union
 
-from ai_hub.models.progress_bar import ProgressBar
-from ai_hub.models.users import User
-from ai_hub.services.summaries import generate_cluster_description_title
 import numpy as np
 from loguru import logger
 from openai import AsyncOpenAI
+from phospho.models import Session, Task
 from sklearn.cluster import DBSCAN, AgglomerativeClustering  # type: ignore
 from sklearn.decomposition import PCA  # type: ignore
 from sklearn.metrics.pairwise import cosine_similarity  # type: ignore
 from sklearn.preprocessing import OneHotEncoder  # type: ignore
 
-
 from ai_hub.core import config
 from ai_hub.models.clusterings import Cluster
 from ai_hub.models.embeddings import Embedding
-from phospho.models import Session, Task
+from ai_hub.models.progress_bar import ProgressBar
+from ai_hub.models.users import User
+from ai_hub.services.summaries import generate_cluster_description_title
 
 openai_client = AsyncOpenAI(api_key=config.OPENAI_API_KEY)
 

@@ -180,8 +180,6 @@ jobs:
           PHOSPHO_API_KEY_ONBOARDING: ${{ secrets.PHOSPHO_API_KEY_ONBOARDING }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-          EXTRACTOR_SECRET_KEY: ${{ secrets.EXTRACTOR_SECRET_KEY }}
-          EXTRACTOR_URL: ${{ vars.EXTRACTOR_URL }}
           ANYSCALE_API_KEY: ${{ secrets.ANYSCALE_API_KEY }}
           PHOSPHO_AI_HUB_URL: ${{ secrets.PHOSPHO_AI_HUB_URL }}
           PHOSPHO_AI_HUB_API_KEY: ${{ secrets.PHOSPHO_AI_HUB_API_KEY }}
@@ -209,7 +207,7 @@ jobs:
             --memory 1Gi \
             --region europe-west1 \
             --allow-unauthenticated \
-            --set-env-vars OPENAI_API_KEY=$OPENAI_API_KEY,RESEND_API_KEY=$RESEND_API_KEY,ENVIRONMENT=staging,SLACK_URL=$SLACK_URL,SENTRY_DSN=$SENTRY_DSN,PROPELAUTH_API_KEY=$PROPELAUTH_API_KEY,PROPELAUTH_URL=$PROPELAUTH_URL,MONGODB_URL=$MONGODB_URL,MONGODB_NAME=$MONGODB_NAME,QDRANT_URL=$QDRANT_URL,QDRANT_API_KEY=$QDRANT_API_KEY,PHOSPHO_API_KEY_ONBOARDING=$PHOSPHO_API_KEY_ONBOARDING,STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET,EXTRACTOR_SECRET_KEY=$EXTRACTOR_SECRET_KEY,EXTRACTOR_URL=$EXTRACTOR_URL,ANYSCALE_API_KEY=$ANYSCALE_API_KEY,IS_MAINTENANCE=$IS_MAINTENANCE \
+            --set-env-vars OPENAI_API_KEY=$OPENAI_API_KEY,RESEND_API_KEY=$RESEND_API_KEY,ENVIRONMENT=staging,SLACK_URL=$SLACK_URL,SENTRY_DSN=$SENTRY_DSN,PROPELAUTH_API_KEY=$PROPELAUTH_API_KEY,PROPELAUTH_URL=$PROPELAUTH_URL,MONGODB_URL=$MONGODB_URL,MONGODB_NAME=$MONGODB_NAME,QDRANT_URL=$QDRANT_URL,QDRANT_API_KEY=$QDRANT_API_KEY,PHOSPHO_API_KEY_ONBOARDING=$PHOSPHO_API_KEY_ONBOARDING,STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET,ANYSCALE_API_KEY=$ANYSCALE_API_KEY,IS_MAINTENANCE=$IS_MAINTENANCE \
             --set-env-vars PHOSPHO_AI_HUB_URL=$PHOSPHO_AI_HUB_URL,PHOSPHO_AI_HUB_API_KEY=$PHOSPHO_AI_HUB_API_KEY,CRON_SECRET_KEY=$CRON_SECRET_KEY \
             --set-env-vars ARGILLA_URL=$ARGILLA_URL,ARGILLA_API_KEY=$ARGILLA_API_KEY,TEST_PROPELAUTH_ORG_ID=$TEST_PROPELAUTH_ORG_ID \
             --set-env-vars SQLDB_CONNECTION_STRING=$SQLDB_CONNECTION_STRING,CUSTOMERIO_WRITE_KEY=$CUSTOMERIO_WRITE_KEY \
@@ -218,8 +216,6 @@ jobs:
             --set-env-vars TAK_SEARCH_URL=$TAK_SEARCH_URL,TAK_APP_API_KEY=$TAK_APP_API_KEY \
             --set-env-vars MISTRAL_API_KEY=$MISTRAL_API_KEY \
             --image europe-west1-docker.pkg.dev/portal-385519/phospho-backend/app:staging
-
-  # add deploy_ai_hub_staging job here
 
   deploy_ai_hub_staging:
     runs-on: ubuntu-latest
@@ -256,7 +252,7 @@ jobs:
           cp -r phospho-python ai-hub/phospho-python
           cp -r backend ai-hub/backend
           cd ai-hub
-          gcloud builds submit --config cloudbuild-production.yaml
+          gcloud builds submit --config cloudbuild-staging.yaml
 
       - name: Deploy to Cloud Run in Staging Env
         env:
@@ -272,9 +268,10 @@ jobs:
           TEMPORAL_MTLS_TLS_CERT_BASE64: ${{ secrets.TEMPORAL_MTLS_TLS_CERT_BASE64 }}
           TEMPORAL_MTLS_TLS_KEY_BASE64: ${{ secrets.TEMPORAL_MTLS_TLS_KEY_BASE64 }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: |
-          gcloud run deploy phospho-proprietary-ai-hub-staging \
+          gcloud run deploy phospho-ai-hub-staging \
             --project $GCP_PROJECT_ID \
             --port 8080 \
             --region europe-west1 \
@@ -284,13 +281,13 @@ jobs:
             --set-env-vars OPENAI_API_KEY=$OPENAI_API_KEY \
             --set-env-vars TEMPORAL_HOST_URL=$TEMPORAL_HOST_URL,TEMPORAL_NAMESPACE=$TEMPORAL_NAMESPACE \
             --set-env-vars TEMPORAL_MTLS_TLS_CERT_BASE64=$TEMPORAL_MTLS_TLS_CERT_BASE64,TEMPORAL_MTLS_TLS_KEY_BASE64=$TEMPORAL_MTLS_TLS_KEY_BASE64 \
-            --set-env-vars STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY,RESEND_API_KEY=$RESEND_API_KEY \
+            --set-env-vars STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY,RESEND_API_KEY=$RESEND_API_KEY,STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET \
             --max-instances 10 \
             --min-instances 0 \
             --cpu 4 \
             --memory 2Gi \
             --no-cpu-throttling \
-            --image europe-west1-docker.pkg.dev/portal-385519/phospho-proprietary-ai-hub/app:staging
+            --image europe-west1-docker.pkg.dev/portal-385519/phospho-backend/ai-hub:staging
 
   run_python_integration_tests:
     needs: [deploy_extractor_staging, deploy_backend_staging]
@@ -350,8 +347,6 @@ jobs:
           PHOSPHO_API_KEY_ONBOARDING: ${{ secrets.PHOSPHO_API_KEY_ONBOARDING }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-          EXTRACTOR_SECRET_KEY: ${{ secrets.EXTRACTOR_SECRET_KEY }}
-          EXTRACTOR_URL: ${{ vars.EXTRACTOR_URL }}
           ANYSCALE_API_KEY: ${{ secrets.ANYSCALE_API_KEY }}
           ARGILLA_URL: ${{ vars.ARGILLA_URL }}
           ARGILLA_API_KEY: ${{ secrets.ARGILLA_API_KEY }}
