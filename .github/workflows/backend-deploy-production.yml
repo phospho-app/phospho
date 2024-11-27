@@ -222,6 +222,7 @@ jobs:
           TEMPORAL_MTLS_TLS_CERT_BASE64: ${{ secrets.TEMPORAL_MTLS_TLS_CERT_BASE64 }}
           TEMPORAL_MTLS_TLS_KEY_BASE64: ${{ secrets.TEMPORAL_MTLS_TLS_KEY_BASE64 }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: |
           gcloud run deploy phospho-ai-hub \
@@ -235,6 +236,7 @@ jobs:
             --set-env-vars TEMPORAL_HOST_URL=$TEMPORAL_HOST_URL,TEMPORAL_NAMESPACE=$TEMPORAL_NAMESPACE \
             --set-env-vars TEMPORAL_MTLS_TLS_CERT_BASE64=$TEMPORAL_MTLS_TLS_CERT_BASE64,TEMPORAL_MTLS_TLS_KEY_BASE64=$TEMPORAL_MTLS_TLS_KEY_BASE64 \
             --set-env-vars STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY \
+            --set-env-vars STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET \
             --set-env-vars RESEND_API_KEY=$RESEND_API_KEY \
             --max-instances 10 \
             --min-instances 1 \
