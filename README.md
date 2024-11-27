@@ -35,7 +35,7 @@ https://github.com/phospho-app/phospho/assets/66426745/5422d3b5-4f78-4445-be72-f
 - **Data Visualization**: Powerful tools to understand your data
 - **Multi-user Experience**: Collaborate with your team seamlessly
 
-## Access the hosted version
+## Quick start: How to setup phospho SaaS?
 
 Quickly import, analyze and label data on the [phospho platform](https://phospho.ai).
 
@@ -60,67 +60,60 @@ Quickly import, analyze and label data on the [phospho platform](https://phospho
 - You can also import data directly through a CSV or Excel directly on the platform
 - If you use the python version, you might want to disable auto-logging with `phospho.init(auto_log=False)`
 
-## Use phospho as a white label solution
+## Deploy with docker compose
 
-Want to get the hosted version of phospho as a white label platform?
+Create a `.env.docker` using [this guide](./DeploymentGuide.md). Then, run:
 
-Contact us [here](mailto:contact@phospho.ai?subject=[GitHub]%20phospho%20white%label) to get your own white label backoffice for your llm apps.
+```bash
+docker compose up
+```
+
+Go to `localhost:3000` to see the platform frontend. The backend documentation is available at `localhost:8000/v3/docs`.
+
+## Development guide
+
+### Contributing
+
+We welcome contributions from the community. Please refer to our [contributing guidelines](./CONTRIBUTE.md) for more information.
+
+### Running locally
+
+This project uses Python3.11+ and [NextJS](https://nextjs.org/docs). To work on it locally, create a python virtual environment.
+
+Make sure you have properly added `.env` files in `ai-hub`, `extractor`, `backend`, `platform`.
+
+Then, the quickest way to get started is to use the makefile.
+
+```bash
+python -m venv .venv
+make install
+# Launch everything
+make up
+```
+
+Go to `localhost:3000` to see the platform frontend. The backend documentations are available at `localhost:8000/api/docs`, `localhost:8000/v2/docs` and `localhost:8000/v3/docs`.
+
+To stop everything, run:
+
+```bash
+make stop
+```
+
+## Related projects
+
+- [AI chat bubble with Mistral](https://github.com/phospho-app/ai-chat-bubble) - custom AI assistant connected to your knowledge
+- [chatbot template streamlit OpenAI](https://github.com/phospho-app/template-chatbot-streamlit-openai)
+- [phospho Javascript client](https://github.com/phospho-app/phosphojs)
+- [phospho UI React components for user feedback](https://github.com/phospho-app/phospho-ui-react)
 
 ## License
 
 This project is licensed under the Apache 2.0 License - see the [LICENSE file](./LICENCE) for details
 
-## Related projects
-
-- [chatbot template streamlit OpenAI](https://github.com/phospho-app/template-chatbot-streamlit-openai)
-- [phospho Javascript client](https://github.com/phospho-app/phosphojs)
-- [phospho UI React components for user feedback](https://github.com/phospho-app/phospho-ui-react)
-
-## Contributing
-
-We welcome contributions from the community. Please refer to our [contributing guidelines](./CONTRIBUTE.md) for more information.
-
 ## About us
 
-We are a team of passionate AI builders, feel free to reach out [here](mailto:contact@phospho.ai?subject=Hey%20baguettes)
-
-_With love and baguettes from Paris, the phospho team 🥖💚_
+We are a team of passionate AI builders, feel free to reach out [here](mailto:contact@phospho.ai?subject=Hey%20baguettes). _With love and baguettes from Paris, the phospho team 🥖💚_
 
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=phospho-app/phospho&type=Date)](https://star-history.com/#phospho-app/phospho&Date)
-
-## Installation
-
-### Requirements
-
-This project uses Poetry, Python3.11+ and Node/npm/NextJS for the frontend.
-
-1. **Create a Virtual Environment and install dependencies**  
-   Run the following commands to create a virtual environment and install dependencies
-   phospho depends on different services which you need to install dependencies for
-
-```bash
-# 1 - Start at the root of the project and create a virtual environment
-python -m venv .venv
-# 2 - Install dependencies following with backend
-cd ../backend
-poetry install
-# 3 - Install dependencies following with extractor
-cd ../extractor
-poetry install
-# 4 - Install dependencies following up with ai-hub
-cd ../ai-hub
-poetry install
-# 5 - Finish up by installing the frontend in /platform
-cd ../platform
-npm i # You might need to install Node and npm for this step
-```
-
-2. **Run the phospho Platform**
-   To run the phospho platform locally, you will need to run these 4 services:
-
-   - **Backend**: More information in `README.md`
-   - **AI Hub**: More information in `README.md`
-   - **Extractor**: More information in `README.md` 
-   - **Frontend**: More information in `README.md`
