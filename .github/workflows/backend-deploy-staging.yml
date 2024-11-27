@@ -6,6 +6,7 @@ on:
     paths:
       - "backend/**"
       - "extractor/**"
+      - "ai-hub/**"
     branches:
       - dev
 
@@ -93,9 +94,7 @@ jobs:
         env:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
         run: |
-          cp -r phospho-python extractor/phospho-python
-          cd extractor
-          gcloud builds submit --config cloudbuild-staging.yaml
+          gcloud builds submit --config extractor/cloudbuild-staging.yaml
 
       - name: Deploy to Cloud Run in Staging Env
         env:
@@ -160,9 +159,7 @@ jobs:
         env:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
         run: |
-          cp -r phospho-python backend/phospho-python
-          cd backend
-          gcloud builds submit --config cloudbuild-staging.yaml
+          gcloud builds submit --config backend/cloudbuild-staging.yaml
 
       - name: Deploy to Cloud Run in Staging Env
         env:
@@ -249,10 +246,7 @@ jobs:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
         # https://cloud.google.com/sdk/gcloud/reference/builds/submit
         run: |
-          cp -r phospho-python ai-hub/phospho-python
-          cp -r backend ai-hub/backend
-          cd ai-hub
-          gcloud builds submit --config cloudbuild-staging.yaml
+          gcloud builds submit --config ai-hub/cloudbuild-staging.yaml
 
       - name: Deploy to Cloud Run in Staging Env
         env:

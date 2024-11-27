@@ -36,3 +36,5 @@ stop:
 	-pkill -f 'uvicorn.*7605'
 	-pkill -f 'uvicorn.*8000'
 	-pkill -f 'node.*platform'
+	-pkill -f 'temporal.*7999'
+	
