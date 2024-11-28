@@ -42,14 +42,10 @@ jobs:
           path: .venv
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
-      # Install dependencies if cache does not exist
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
-
       # Test the bare phospho package
       - name: Install project without lab
-        run: poetry install --no-interaction
+        run: poetry install --with dev --no-interaction
+
       - name: Run tests
         env:
           PHOSPHO_API_KEY: ${{ secrets.PHOSPHO_API_KEY }}
@@ -60,9 +56,10 @@ jobs:
         run: |
           source .venv/bin/activate
           pytest -k test_log
+
       # Test the phospho package, with lab. This has extra dependencies
       - name: Install project with lab
-        run: poetry install --no-interaction --extras "lab"
+        run: poetry install  --with dev --no-interaction --extras "lab"
       - name: Run tests
         env:
           PHOSPHO_API_KEY: ${{ secrets.PHOSPHO_API_KEY }}
