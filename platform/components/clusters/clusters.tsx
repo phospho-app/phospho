@@ -281,8 +281,9 @@ const Clusters: React.FC = () => {
                 <Plus className="w-4 h-4 mr-1" /> New clustering
               </Button>
             </SheetTrigger>
-
-            <ExportClusteringsButton />
+            {clusterings && clusterings.length > 0 && (
+              <ExportClusteringsButton />
+            )}
           </div>
           {selectedClustering && (
             <div className="space-x-2 my-2">
