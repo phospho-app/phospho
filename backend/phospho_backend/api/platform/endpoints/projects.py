@@ -28,7 +28,10 @@ from phospho_backend.api.platform.models import (
     Users,
 )
 from phospho_backend.api.platform.models.explore import Sorting
-from phospho_backend.api.platform.models.projects import EmailUsersQuery
+from phospho_backend.api.platform.models.projects import (
+    EmailClusteringsQuery,
+    EmailUsersQuery,
+)
 from phospho_backend.core import config
 from phospho_backend.security.authentification import (
     propelauth,
@@ -292,6 +295,31 @@ async def email_users(
         scope="users",
     )
     logger.info(f"Emailing users of project {project_id} to {user.email}")
+    return {"status": "ok"}
+
+
+@router.post(
+    "/projects/{project_id}/clusterings/email",
+    description="Get an email with the clusterings data of a project in csv and xlsx format",
+)
+async def email_clusterings(
+    project_id: str,
+    query: EmailClusteringsQuery,
+    background_tasks: BackgroundTasks,
+    user: User = Depends(propelauth.require_user),
+) -> dict:
+    project = await get_project_by_id(project_id)
+    propelauth.require_org_member(user, project.org_id)
+
+    # Trigger the email sending in the background
+    background_tasks.add_task(
+        email_project_data,
+        project_id=project_id,
+        filters=query.filters,
+        uid=user.user_id,
+        scope="clusterings",
+    )
+    logger.info(f"Emailing clusterings of project {project_id} to {user.email}")
     return {"status": "ok"}
 
 

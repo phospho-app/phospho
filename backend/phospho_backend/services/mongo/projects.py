@@ -30,6 +30,7 @@ from phospho_backend.services.mongo.tasks import (
     get_all_tasks,
     label_sentiment_analysis,
 )
+from phospho_backend.services.mongo.clustering import fetch_all_clusterings
 from phospho_backend.services.mongo.users import fetch_users_metadata
 from phospho_backend.services.slack import slack_notification
 from phospho_backend.utils import generate_timestamp, generate_uuid
@@ -331,7 +332,7 @@ async def email_project_data(
     project_id: str,
     uid: str,
     limit: int | None = 5_000,
-    scope: Literal["tasks", "users"] = "tasks",
+    scope: Literal["tasks", "users", "clusterings"] = "tasks",
     filters: ProjectDataFilters | None = None,
 ) -> None:
     def send_error_message():
@@ -379,6 +380,12 @@ async def email_project_data(
                 ]:
                     if col in data_df.columns:
                         data_df[col] = pd.to_datetime(data_df[col], unit="s")
+
+            elif scope == "clusterings":
+                await fetch_all_clusterings(project_id=project_id)
+                data_df = pd.DataFrame(
+                    [flat_task.model_dump() for flat_task in flattened_tasks]
+                )
 
             elif scope == "users":
                 # Convert task list to Pandas DataFrame

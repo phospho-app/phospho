@@ -32,3 +32,7 @@ class ConnectLangfuseQuery(BaseModel):
 
 class EmailUsersQuery(BaseModel):
     filters: ProjectDataFilters
+
+
+class EmailClusteringsQuery(BaseModel):
+    filters: ProjectDataFilters
