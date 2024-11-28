@@ -384,23 +384,23 @@ async def email_project_data(
                         data_df[col] = pd.to_datetime(data_df[col], unit="s")
 
             elif scope == "clusterings":
-                df = pd.DataFrame(
+                clustering_df = pd.DataFrame(
                     [
-                        flat_user.model_dump()
-                        for flat_user in await fetch_all_clusterings(
+                        clustering.model_dump()
+                        for clustering in await fetch_all_clusterings(
                             project_id=project_id
                         )
                     ]
                 ).explode(["clusters", "clusters_ids"])
-                df.rename(columns=lambda x: f"clustering_{x}", inplace=True)
-                df.reset_index(drop=True, inplace=True)
+                clustering_df.rename(columns=lambda x: f"clustering_{x}", inplace=True)
+                clustering_df.reset_index(drop=True, inplace=True)
                 clusters_df = pd.DataFrame.from_dict(
-                    df["clustering_clusters"]
+                    clustering_df["clustering_clusters"]
                     .apply(lambda x: {} if pd.isna(x) else x)
                     .to_list()
                 )
                 clusters_df.rename(columns=lambda x: f"cluster_{x}", inplace=True)
-                data_df = pd.concat([df, clusters_df], axis=1)
+                data_df = pd.concat([clustering_df, clusters_df], axis=1)
                 data_df.drop(
                     columns=[
                         "clustering_pca",
@@ -409,9 +409,6 @@ async def email_project_data(
                     ],
                     inplace=True,
                 )
-
-                print(f"result of the function fetch_flattened_clustering: {data_df}")
-                logger.warning(f"raw clusterings data: {data_df}")
 
             elif scope == "users":
                 # Convert task list to Pandas DataFrame
