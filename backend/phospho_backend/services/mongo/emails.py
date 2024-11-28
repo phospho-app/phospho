@@ -108,7 +108,7 @@ async def send_quota_exceeded_email(org_id: str):
 
             for user in users:
                 send_email(
-                    user.get("email"),
+                    user.email,
                     email_subject,
                     email_content,
                     from_email="Paul from phospho <contact@phospho.ai>",
