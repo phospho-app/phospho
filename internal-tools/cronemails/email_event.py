@@ -53,7 +53,7 @@ class EmailEvent:
             # Send the email
             params = {
                 "from": "phospho <notifications@phospho.ai>",
-                "to": [user.get("email")],
+                "to": [user.email],
                 "subject": self.email_subject,
                 "html": self.email_content,
                 "reply_to": "contact@phospho.ai",

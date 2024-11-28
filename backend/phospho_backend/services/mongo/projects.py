@@ -338,7 +338,7 @@ async def email_project_data(
         # Send an error message to the user
         params = {
             "from": "phospho <contact@phospho.ai>",
-            "to": [user.get("email")],
+            "to": [user.email],
             "subject": "Error exporting your data",
             "html": f"""<p>Hello!<br><br>We could not export your data for the project with id {project_id} (timestamp: {datetime.datetime.now().isoformat()})</p>
             <p><br>Please contact the support at contact@phospho.ai</p>
@@ -348,7 +348,7 @@ async def email_project_data(
         }
 
         resend.Emails.send(params)
-        logger.debug(f"Sent error message to user: {user.get('email')}")
+        logger.debug(f"Sent error message to user: {user.email}")
 
     if config.ENVIRONMENT != "preview":
         # Get the user email
@@ -493,7 +493,7 @@ async def email_project_data(
 
         params = {
             "from": "phospho <contact@phospho.ai>",
-            "to": [user.get("email")],
+            "to": [user.email],
             "subject": "Your data is ready",
             "html": f"""<p>Hello!<br><br>Please find your exported {scope} below for your project with id {project_id} (timestamp: {datetime.datetime.now().isoformat()})</p>
             <p><br>Let us know your thoughts about phospho! You can directly respond to this email address !</p>
