@@ -42,6 +42,7 @@ import * as z from "zod";
 import { ClustersCards } from "./clusters-cards";
 import { ClusteringDropDown } from "./clusters-drop-down";
 import { CustomPlot } from "./clusters-plot";
+import { ExportClusteringsButton } from "./download-clusterings";
 
 const Clusters: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);
@@ -280,6 +281,8 @@ const Clusters: React.FC = () => {
                 <Plus className="w-4 h-4 mr-1" /> New clustering
               </Button>
             </SheetTrigger>
+
+            <ExportClusteringsButton />
           </div>
           {selectedClustering && (
             <div className="space-x-2 my-2">

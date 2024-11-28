@@ -30,6 +30,9 @@ from phospho_backend.services.mongo.tasks import (
     get_all_tasks,
     label_sentiment_analysis,
 )
+from phospho_backend.services.mongo.clustering import (
+    fetch_all_clusterings,
+)
 from phospho_backend.services.mongo.users import fetch_users_metadata
 from phospho_backend.services.slack import slack_notification
 from phospho_backend.utils import generate_timestamp, generate_uuid
@@ -331,7 +334,7 @@ async def email_project_data(
     project_id: str,
     uid: str,
     limit: int | None = 5_000,
-    scope: Literal["tasks", "users"] = "tasks",
+    scope: Literal["tasks", "users", "clusterings"] = "tasks",
     filters: ProjectDataFilters | None = None,
 ) -> None:
     def send_error_message():
@@ -379,6 +382,33 @@ async def email_project_data(
                 ]:
                     if col in data_df.columns:
                         data_df[col] = pd.to_datetime(data_df[col], unit="s")
+
+            elif scope == "clusterings":
+                clustering_df = pd.DataFrame(
+                    [
+                        clustering.model_dump()
+                        for clustering in await fetch_all_clusterings(
+                            project_id=project_id
+                        )
+                    ]
+                ).explode(["clusters", "clusters_ids"])
+                clustering_df.rename(columns=lambda x: f"clustering_{x}", inplace=True)
+                clustering_df.reset_index(drop=True, inplace=True)
+                clusters_df = pd.DataFrame.from_dict(
+                    clustering_df["clustering_clusters"]
+                    .apply(lambda x: {} if pd.isna(x) else x)
+                    .to_list()
+                )
+                clusters_df.rename(columns=lambda x: f"cluster_{x}", inplace=True)
+                data_df = pd.concat([clustering_df, clusters_df], axis=1)
+                data_df.drop(
+                    columns=[
+                        "clustering_pca",
+                        "clustering_tsne",
+                        "clustering_clusters",
+                    ],
+                    inplace=True,
+                )
 
             elif scope == "users":
                 # Convert task list to Pandas DataFrame
@@ -430,7 +460,7 @@ async def email_project_data(
                 raise NotImplementedError(f"Scope {scope} not implemented")
 
         except Exception as e:
-            error_message = f"Error converting {scope} to DataFrame for {user.get('email')} project id {project_id}: {e}"
+            error_message = f"Error converting {scope} to DataFrame for {user.email} project id {project_id}: {e}"
             logger.error(error_message)
             await slack_notification(error_message)
 
@@ -446,7 +476,7 @@ async def email_project_data(
                 }
             )
         except Exception as e:
-            error_message = f"Error converting {scope} to CSV for {user.get('email')} project id {project_id}: {e}"
+            error_message = f"Error converting {scope} to CSV for {user.email} project id {project_id}: {e}"
             logger.error(error_message)
             await slack_notification(error_message)
 
@@ -463,7 +493,7 @@ async def email_project_data(
                 }
             )
         except Exception as e:
-            error_message = f"Error converting {scope} to Excel for {user.get('email')} project id {project_id}: {e}"
+            error_message = f"Error converting {scope} to Excel for {user.email} project id {project_id}: {e}"
             logger.error(error_message)
             await slack_notification(error_message)
 
@@ -482,7 +512,7 @@ async def email_project_data(
                 }
             )
         except Exception as e:
-            error_message = f"Error converting {scope} to Parquet for {user.get('email')} project id {project_id}: {e}"
+            error_message = f"Error converting {scope} to Parquet for {user.email} project id {project_id}: {e}"
             logger.error(error_message)
             await slack_notification(error_message)
 
@@ -505,9 +535,11 @@ async def email_project_data(
 
         try:
             resend.Emails.send(params)  # type: ignore
-            logger.info(f"Successfully sent {scope} by email to {user.get('email')}")
+            logger.info(f"Successfully sent {scope} by email to {user.email}")
         except Exception as e:
-            error_message = f"Error sending email to {user.get('email')} project_id {project_id}: {e}"
+            error_message = (
+                f"Error sending email to {user.email} project_id {project_id}: {e}"
+            )
             logger.error(error_message)
             await slack_notification(error_message)
     else:
