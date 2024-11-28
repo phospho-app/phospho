@@ -29,7 +29,6 @@ from phospho_backend.api.platform.models import (
 )
 from phospho_backend.api.platform.models.explore import Sorting
 from phospho_backend.api.platform.models.projects import (
-    EmailClusteringsQuery,
     EmailUsersQuery,
 )
 from phospho_backend.core import config
@@ -304,7 +303,6 @@ async def email_users(
 )
 async def email_clusterings(
     project_id: str,
-    query: EmailClusteringsQuery,
     background_tasks: BackgroundTasks,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
@@ -315,7 +313,6 @@ async def email_clusterings(
     background_tasks.add_task(
         email_project_data,
         project_id=project_id,
-        filters=query.filters,
         uid=user.user_id,
         scope="clusterings",
     )

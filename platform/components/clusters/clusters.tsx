@@ -39,7 +39,6 @@ import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import * as z from "zod";
 
-// TODO: change it and put it or look for clusters composant
 import { ClustersCards } from "./clusters-cards";
 import { ClusteringDropDown } from "./clusters-drop-down";
 import { CustomPlot } from "./clusters-plot";
