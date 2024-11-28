@@ -437,7 +437,7 @@ async def email_project_data(
                 raise NotImplementedError(f"Scope {scope} not implemented")
 
         except Exception as e:
-            error_message = f"Error converting {scope} to DataFrame for {user.get('email')} project id {project_id}: {e}"
+            error_message = f"Error converting {scope} to DataFrame for {user.email} project id {project_id}: {e}"
             logger.error(error_message)
             await slack_notification(error_message)
 
@@ -453,7 +453,7 @@ async def email_project_data(
                 }
             )
         except Exception as e:
-            error_message = f"Error converting {scope} to CSV for {user.get('email')} project id {project_id}: {e}"
+            error_message = f"Error converting {scope} to CSV for {user.email} project id {project_id}: {e}"
             logger.error(error_message)
             await slack_notification(error_message)
 
@@ -470,7 +470,7 @@ async def email_project_data(
                 }
             )
         except Exception as e:
-            error_message = f"Error converting {scope} to Excel for {user.get('email')} project id {project_id}: {e}"
+            error_message = f"Error converting {scope} to Excel for {user.email} project id {project_id}: {e}"
             logger.error(error_message)
             await slack_notification(error_message)
 
@@ -489,7 +489,7 @@ async def email_project_data(
                 }
             )
         except Exception as e:
-            error_message = f"Error converting {scope} to Parquet for {user.get('email')} project id {project_id}: {e}"
+            error_message = f"Error converting {scope} to Parquet for {user.email} project id {project_id}: {e}"
             logger.error(error_message)
             await slack_notification(error_message)
 
@@ -512,9 +512,11 @@ async def email_project_data(
 
         try:
             resend.Emails.send(params)  # type: ignore
-            logger.info(f"Successfully sent {scope} by email to {user.get('email')}")
+            logger.info(f"Successfully sent {scope} by email to {user.email}")
         except Exception as e:
-            error_message = f"Error sending email to {user.get('email')} project_id {project_id}: {e}"
+            error_message = (
+                f"Error sending email to {user.email} project_id {project_id}: {e}"
+            )
             logger.error(error_message)
             await slack_notification(error_message)
     else:
