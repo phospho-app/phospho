@@ -30,7 +30,9 @@ from phospho_backend.services.mongo.tasks import (
     get_all_tasks,
     label_sentiment_analysis,
 )
-from phospho_backend.services.mongo.clustering import fetch_all_clusterings
+from phospho_backend.services.mongo.clustering import (
+    fetch_all_clusterings,
+)
 from phospho_backend.services.mongo.users import fetch_users_metadata
 from phospho_backend.services.slack import slack_notification
 from phospho_backend.utils import generate_timestamp, generate_uuid
@@ -382,10 +384,34 @@ async def email_project_data(
                         data_df[col] = pd.to_datetime(data_df[col], unit="s")
 
             elif scope == "clusterings":
-                await fetch_all_clusterings(project_id=project_id)
-                data_df = pd.DataFrame(
-                    [flat_task.model_dump() for flat_task in flattened_tasks]
+                df = pd.DataFrame(
+                    [
+                        flat_user.model_dump()
+                        for flat_user in await fetch_all_clusterings(
+                            project_id=project_id
+                        )
+                    ]
+                ).explode(["clusters", "clusters_ids"])
+                df.rename(columns=lambda x: f"clustering_{x}", inplace=True)
+                df.reset_index(drop=True, inplace=True)
+                clusters_df = pd.DataFrame.from_dict(
+                    df["clustering_clusters"]
+                    .apply(lambda x: {} if pd.isna(x) else x)
+                    .to_list()
                 )
+                clusters_df.rename(columns=lambda x: f"cluster_{x}", inplace=True)
+                data_df = pd.concat([df, clusters_df], axis=1)
+                data_df.drop(
+                    columns=[
+                        "clustering_pca",
+                        "clustering_tsne",
+                        "clustering_clusters",
+                    ],
+                    inplace=True,
+                )
+
+                print(f"result of the function fetch_flattened_clustering: {data_df}")
+                logger.warning(f"raw clusterings data: {data_df}")
 
             elif scope == "users":
                 # Convert task list to Pandas DataFrame
