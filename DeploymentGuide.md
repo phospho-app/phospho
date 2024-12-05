@@ -130,4 +130,4 @@ docker compose up
 
 Congratulations! You have successfully deployed the Phospho platform with Docker. You can now start exploring the platform and use its powerful tools to manage your LLM apps more effectively.
 
-If you run into any issues, feel free to ask for support on the [Phospho Discord channel](https://discord.gg/phospho).
+If you run into any issues, feel free to ask for support to `contact@phospho.ai`
