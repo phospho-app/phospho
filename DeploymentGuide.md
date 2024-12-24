@@ -6,19 +6,19 @@ Welcome! This guide will help you deploy the Phospho Platform using Docker Compo
 
 ### 1. **Create a Propelauth Account**
 
-Propelauth is essential for authentication and security within your application.
+Propelauth is used for authentication and security.
 
 - **Sign Up:** [Create your Propelauth account](https://propelauth.com/signup)
 
 ### 2. **Obtain an OpenAI API Key**
 
-An OpenAI API Key is required to integrate OpenAI services into your platform.
+An OpenAI API Key is required for analytics and clustering.
 
 - **Get API Key:** [Register and obtain your OpenAI API Key](https://platform.openai.com/account/api-keys)
 
 ### 3. **Register for MongoDB**
 
-MongoDB will serve as your database solution.
+MongoDB will serve as a database solution. You can use a local one or MongoDB Atlas, the cloud solution.
 
 - **Sign Up:** [Register for MongoDB](https://www.mongodb.com/try)
 
@@ -30,9 +30,15 @@ Docker is used to containerize your application, ensuring consistency across dif
 
 ### 5. **Set up Google Cloud Platform (GCP)**
 
-GCP is used for cloud compuations of some metrics.
+The GCP Natural Language API is used for to detect the language and the sentiment of user messages.
 
-- **Get Started with GCP:** [Deploy on Google Cloud Platform](https://cloud.google.com/docs/get-started?hl=fr)
+- **Get Started with GCP:** [Google Cloud Platform](https://cloud.google.com/natural-language/docs)
+
+### 6. **Set up Temporal**
+
+Temporal is used as a brocker to manage jobs and long computations.
+
+- **Get Started with Temporal:** [Get started guide](https://learn.temporal.io/getting_started/)
 
 ## Step 1: Set Up Your Project Directory
 
@@ -124,4 +130,4 @@ docker compose up
 
 Congratulations! You have successfully deployed the Phospho platform with Docker. You can now start exploring the platform and use its powerful tools to manage your LLM apps more effectively.
 
-If you run into any issues, feel free to ask for support on the [Phospho Discord channel](https://discord.gg/phospho).
+If you run into any issues, feel free to ask for support to `contact@phospho.ai`
