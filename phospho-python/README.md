@@ -4,7 +4,7 @@ Phospho is an open source platform to help you monitor LLM apps.
 
 With phospho, monitor every user interaction with your LLM app to identify issues and improve performance. Understand how users use your app and which versions of your product are the most successful.
 
-Read the docs at [docs.phospho.ai](https://phospho-app.github.io/docs/).
+Read the docs at [phospho-app.github.io/docs/](https://phospho-app.github.io/docs/).
 
 > _Warning_ : This project is still under active development!
 
@@ -66,5 +66,5 @@ See the [phospho lab documentation](https://phospho-app.github.io/docs/local/pho
 
 ## Usage
 
-Read the docs at [docs.phospho.ai](https://phospho-app.github.io/docs/) for more information.
+Read the docs at [phospho-app.github.io/docs/](https://phospho-app.github.io/docs/) for more information.
 Use your phospho dashboard to monitor your agent, score interactions and detect events.

@@ -29,7 +29,7 @@ Welcome to phospho!
 
 `phospho`_ is a platform to monitor what your users are talking about on your LLM app.
 
-You're reading the documentation for the phospho Python module. The full documentation for phospho `is available here <http://docs.phospho.ai>`_.
+You're reading the documentation for the phospho Python module. The full documentation for phospho `is available here <http://phospho-app.github.io/docs/>`_.
 
 Getting started
 ---------------

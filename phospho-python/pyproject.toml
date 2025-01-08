@@ -5,7 +5,7 @@ description = "Text Analytics for LLM apps"
 authors = ["phospho <contact@phospho.ai>"]
 readme = "README.md"
 homepage = "https://github.com/phospho-app/phospho"
-documentation = "https://docs.phospho.ai"
+documentation = "https://phospho-app.github.io/docs/"
 keywords = ['LLM', 'Agents', 'gen ai', 'phospho', 'analytics', 'nlp']
 
 [tool.poetry.scripts]

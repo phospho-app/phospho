@@ -49,7 +49,7 @@ function SetupABTestingCallout() {
                 </CardDescription>
               </div>
               <Link
-                href="https://phospho-app.github.io/docs/guides/ab-test"
+                href="https://phospho-app.github.io/docs/analytics/ab-test/"
                 target="_blank"
               >
                 <Button>Setup AB Testing</Button>

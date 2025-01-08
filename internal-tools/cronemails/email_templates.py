@@ -6,7 +6,7 @@ email_1_task = """
         <p>The next steps:</p>
         <ul>
             <li>Invite your team members to join your organization</li>
-            <li>Setup <a href="https://phospho-app.github.io/docs/guides/events">custom events</a> to better understand your users</li>
+            <li>Setup <a href="https://phospho-app.github.io/docs/analytics/events/">custom events</a> to better understand your users</li>
             <li>Check out our <a href="https://phospho-app.github.io/docs/guides">guides</a> to discover the features of phospho</li>
         </ul>
         <p>If you have any questions, feel free to reach out to me at <a href="mailto:paul-louis@phospho.ai">paul-louis@phospho.ai</a></p>
@@ -22,7 +22,7 @@ email_100_tasks = """
     <body>
         <p>Hi,</p>
         <p>You have logged 100 tasks on Phospho. You are a true power user!</p>
-        <p>Did you know you could also group tasks into sessions, and add user id metadata? Check out our <a href="https://phospho-app.github.io/docs/guides/sessions-and-users">guide</a>!</p>
+        <p>Did you know you could also group tasks into sessions, and add user id metadata? Check out our <a href="https://phospho-app.github.io/docs/analytics/sessions-and-users/">guide</a>!</p>
         <p>If you wonder what else can phospho do for you, reach out at <a href="mailto:paul-louis@phospho.ai">paul-louis@phospho.ai</a></p>
         <p>Best,</p>
         <p>Paul, CEO of phospho</p>
