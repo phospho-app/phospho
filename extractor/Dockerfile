@@ -16,11 +16,13 @@ RUN poetry config virtualenvs.in-project true
 
 # Copy phospho package
 COPY ./phospho-python /phospho-python
-RUN poetry install --no-interaction --no-ansi
-
 # Copy source code
 COPY ./extractor/extractor /src/extractor
 COPY ./extractor/main.py /src/main.py
+
+RUN poetry install --no-interaction --no-ansi
+
+
 
 EXPOSE 8080
 
