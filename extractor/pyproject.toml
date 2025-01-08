@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "phospho extractor"
 authors = ["Pierre-LouisBJT <plbiojout@gmail.com>"]
 readme = "README.md"
+package-mode = true
 
 [tool.poetry.dependencies]
 python = "^3.11"
