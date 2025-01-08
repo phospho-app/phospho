@@ -123,7 +123,7 @@ def check_health_backend():
 api_v2 = FastAPI(
     title="phospho",
     summary="phospho http api v2",
-    description="For more information, see the [documentation](https://docs.phospho.ai/).",
+    description="For more information, see the [documentation](https://phospho-app.github.io/docs/).",
     version="0.2.1",
     contact={
         "name": "phospho",
@@ -157,7 +157,7 @@ app.mount("/v0", api_v2)
 api_v3 = FastAPI(
     title="phospho",
     summary="phospho http api v3",
-    description="For more information, see the [documentation](https://docs.phospho.ai/).",
+    description="For more information, see the [documentation](https://phospho-app.github.io/docs/).",
     version="0.3.0",
     contact={
         "name": "phospho",

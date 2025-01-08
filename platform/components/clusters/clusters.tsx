@@ -210,7 +210,7 @@ const Clusters: React.FC = () => {
                         Detect recurring topics, trends, and outliers using
                         unsupervized machine learning.{" "}
                         <a
-                          href="https://docs.phospho.ai/analytics/clustering"
+                          href="https://phospho-app.github.io/docs/analytics/clustering"
                           target="_blank"
                           className="underline"
                         >

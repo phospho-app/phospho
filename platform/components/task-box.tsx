@@ -167,7 +167,7 @@ function TaskBox({
                 <pre className="whitespace-pre-wrap mx-2 bg-secondary p-2 text-xs">
                   No steps data found. Setup tracing to add them here.{" "}
                   <a
-                    href="https://docs.phospho.ai/import-data/tracing"
+                    href="https://phospho-app.github.io/docs/import-data/tracing"
                     className="underline cursor-pointer"
                     target="_blank"
                   >

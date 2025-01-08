@@ -272,7 +272,7 @@ function TasksTable({ forcedDataFilters }: DataTableProps) {
                   </AlertDescription>
                 </div>
                 <Link
-                  href="https://docs.phospho.ai/integrations/python/analytics"
+                  href="https://phospho-app.github.io/docs/integrations/python/analytics"
                   target="_blank"
                 >
                   <Button>Learn more</Button>
