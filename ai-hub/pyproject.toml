@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "The backend service handling AI related tasks (training and inference) for phospho"
 authors = ["phospho <contact@phospho.app>"]
 readme = "README.md"
-package-mode = true
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11, <3.13"
