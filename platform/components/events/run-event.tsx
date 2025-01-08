@@ -226,7 +226,7 @@ export default function RunEvent({
                     <HoverCardContent className="w-72">
                       You are billed based on the number of detections.{" "}
                       <Link
-                        href="https://phospho-app.github.io/docs/guides/events"
+                        href="https://phospho-app.github.io/docs/analytics/events/"
                         target="_blank"
                         className="underline"
                       >

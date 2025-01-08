@@ -51,7 +51,7 @@ function SetupUsersCallout() {
                   </CardDescription>
                 </div>
                 <Link
-                  href="https://phospho-app.github.io/docs/guides/sessions-and-users#users"
+                  href="https://phospho-app.github.io/docs/analytics/sessions-and-users/"
                   target="_blank"
                 >
                   <Button variant="default">Set up user tracking</Button>

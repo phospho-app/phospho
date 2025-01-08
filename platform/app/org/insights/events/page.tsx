@@ -116,7 +116,7 @@ export default function Page() {
             Your data is automatically augmented using these event detectors.{" "}
             <Link
               className="underline "
-              href="https://phospho-app.github.io/docs/guides/events"
+              href="https://phospho-app.github.io/docs/analytics/events/"
             >
               Learn more
             </Link>
@@ -138,7 +138,7 @@ export default function Page() {
                 set up below.{" "}
                 <Link
                   className="underline "
-                  href="https://phospho-app.github.io/docs/guides/events"
+                  href="https://phospho-app.github.io/docs/analytics/events/"
                 >
                   Learn more
                 </Link>
@@ -169,7 +169,7 @@ export default function Page() {
         <AlertDescription>
           Read our{" "}
           <Link
-            href="https://phospho-app.github.io/docs/guides/events"
+            href="https://phospho-app.github.io/docs/analytics/events/"
             className="underline"
           >
             guide to events
