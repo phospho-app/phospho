@@ -8,18 +8,20 @@ RUN pip install poetry
 
 # Copy pyproject.toml and poetry.lock
 COPY ./ai-hub/pyproject.toml /src/pyproject.toml
+COPY ./ai-hub/README.md /src/README.md
 COPY ./ai-hub/poetry.lock /src/poetry.lock
 
 COPY ./phospho-python/ /phospho-python
 COPY ./backend/ /backend
 
+# Copy source code
+COPY ./ai-hub/ai_hub /src/ai_hub
+COPY ./ai-hub/main.py /src/main.py
+
 # Install dependencies
 RUN poetry config virtualenvs.in-project true
 RUN poetry install --no-interaction --no-ansi
 
-# Copy source code
-COPY ./ai-hub/ai_hub /src/ai_hub
-COPY ./ai-hub/main.py /src/main.py
 
 EXPOSE 8081
 

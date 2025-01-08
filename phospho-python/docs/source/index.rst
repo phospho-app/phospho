@@ -34,7 +34,7 @@ You're reading the documentation for the phospho Python module. The full documen
 Getting started
 ---------------
 
-Read the `getting started guide <https://docs.phospho.ai/getting-started>`_ to learn how to use phospho.
+Read the `getting started guide <https://phospho-app.github.io/docs/getting-started>`_ to learn how to use phospho.
 
 Get in touch
 ------------

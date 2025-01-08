@@ -755,7 +755,7 @@ export const SendDataAlertDialog = ({
                     <div className="flex-col space-y-4">
                       <div className="flex space-x-2">
                         <Link
-                          href="https://docs.phospho.ai/getting-started#how-to-setup-logging"
+                          href="https://phospho-app.github.io/docs/getting-started#how-to-setup-logging"
                           target="_blank"
                         >
                           <Button className="w-96">
@@ -885,7 +885,7 @@ phospho.log({input, output});`}
                     <div className="flex-col space-y-4">
                       <div className="flex space-x-2">
                         <Link
-                          href="https://docs.phospho.ai/getting-started#how-to-setup-logging"
+                          href="https://phospho-app.github.io/docs/getting-started#how-to-setup-logging"
                           target="_blank"
                         >
                           <Button className="w-96">
