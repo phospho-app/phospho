@@ -79,7 +79,7 @@ def callback(
     """
     phospho: a command line interface for the phospho platform
 
-    Learn more: https://docs.phospho.ai
+    Learn more: https://phospho-app.github.io/docs/
     """
     print("[green][bold]Welcome to 🧪phospho[/bold][/green] ")
     print("-> API keys & Project ids: https://platform.phospho.ai")

@@ -67,7 +67,7 @@ export function NavBarHelp() {
         <DropdownMenuContent align="end">
           <DropdownMenuItem>
             <Link
-              href="https://docs.phospho.ai"
+              href="https://phospho-app.github.io/docs/"
               target="_blank"
               onClick={() =>
                 posthog.capture("navbar_to_docs", {
