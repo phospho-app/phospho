@@ -8,8 +8,8 @@ RUN pip install poetry
 
 # Copy pyproject.toml and poetry.lock
 COPY ./extractor/pyproject.toml /src/pyproject.toml
+COPY ./extractor/README.md /src/README.md
 COPY ./extractor/poetry.lock /src/poetry.lock
-
 
 # Create virtualenv at .venv in the project instead of ~/.cache/
 RUN poetry config virtualenvs.in-project true

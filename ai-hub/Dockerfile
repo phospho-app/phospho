@@ -8,6 +8,7 @@ RUN pip install poetry
 
 # Copy pyproject.toml and poetry.lock
 COPY ./ai-hub/pyproject.toml /src/pyproject.toml
+COPY ./ai-hub/README.md /src/README.md
 COPY ./ai-hub/poetry.lock /src/poetry.lock
 
 COPY ./phospho-python/ /phospho-python

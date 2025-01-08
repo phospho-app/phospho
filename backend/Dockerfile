@@ -8,6 +8,7 @@ RUN pip install poetry
 
 # Copy pyproject.toml and poetry.lock
 COPY ./backend/pyproject.toml /src/pyproject.toml
+COPY ./backend/README.md /src/README.md
 COPY ./backend/poetry.lock /src/poetry.lock
 
 # Install dependencies
