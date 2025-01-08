@@ -167,7 +167,7 @@ function LetsGo() {
           <div className="pt-4">
             Learn more in the{" "}
             <Link
-              href="https://docs.phospho.ai/welcome"
+              href="https://phospho-app.github.io/docs/welcome"
               target="_blank"
               className="underline"
             >

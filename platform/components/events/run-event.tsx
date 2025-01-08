@@ -199,7 +199,7 @@ export default function RunEvent({
                   No messages found in this project. Log some data to run event.
                 </span>
                 <Link
-                  href="https://docs.phospho.ai/getting-started"
+                  href="https://phospho-app.github.io/docs/getting-started"
                   target="_blank"
                   className="underline"
                 >
@@ -226,7 +226,7 @@ export default function RunEvent({
                     <HoverCardContent className="w-72">
                       You are billed based on the number of detections.{" "}
                       <Link
-                        href="https://docs.phospho.ai/guides/events"
+                        href="https://phospho-app.github.io/docs/guides/events"
                         target="_blank"
                         className="underline"
                       >

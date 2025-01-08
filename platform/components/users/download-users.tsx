@@ -50,7 +50,7 @@ const ExportUsersButton: React.FC = () => {
               Select other filters or start tracking users by adding{" "}
               <code>user_id</code> when logging. For more details, check the{" "}
               <a
-                href="https://docs.phospho.ai/analytics/sessions-and-users"
+                href="https://phospho-app.github.io/docs/analytics/sessions-and-users"
                 target="_blank"
                 className="underline"
               >

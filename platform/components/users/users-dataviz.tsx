@@ -360,7 +360,7 @@ const UsersDataviz = ({
               )}
               {userRetention === null && (
                 <div className="flex flex-col text-center items-center h-[10rem] justify-center">
-                  <Link href="https://docs.phospho.ai/analytics/sessions-and-users">
+                  <Link href="https://phospho-app.github.io/docs/analytics/sessions-and-users">
                     <Button variant="outline" size="sm">
                       Start tracking retention
                       <ChevronRight className="ml-2 h-4 w-4" />

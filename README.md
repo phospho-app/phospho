@@ -15,7 +15,7 @@ Detect issues and extract insights from your users' text messages.
 Gather feedback and measure success. Create the best conversational experience for your users.
 Analyze logs effortlessly and finally make sense of all your data.
 
-Learn more in the [documentation](https://docs.phospho.ai/welcome).
+Learn more in the [documentation](https://phospho-app.github.io/docs/welcome).
 
 <div align="center">
 <img src="./clustering-demo.gif" alt="phospho platform">
@@ -53,7 +53,7 @@ Quickly import, analyze and label data on the [phospho platform](https://phospho
 4. Initialize phospho: `phospho.init()`
 5. Start logging to phospho with `phospho.log(input="question", output="answer")`
 
-[Follow this guide to get started.](https://docs.phospho.ai/getting-started)
+[Follow this guide to get started.](https://phospho-app.github.io/docs/getting-started)
 
 **Note:**
 

@@ -100,7 +100,7 @@ export function NavBarHelp() {
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Link
-                  href="https://docs.phospho.ai/getting-started"
+                  href="https://phospho-app.github.io/docs/getting-started"
                   target="_blank"
                 >
                   Quickstart

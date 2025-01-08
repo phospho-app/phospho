@@ -41,7 +41,7 @@ def send_welcome_email(to_email: str):
             <p>Hi ,</p>
             <p>Welcome to Phospho! We are thrilled to have you onboard.</p>
             <p>Need help getting started? Want to learn more about what you can do with phospho? 
-            <br> Check out <a href="https://docs.phospho.ai/guides/welcome-guide">the guides!</a></p>
+            <br> Check out <a href="https://phospho-app.github.io/docs/guides/welcome-guide">the guides!</a></p>
             <p>If anything, feel free to reach out at paul-louis@phospho.ai or chat with our devs on <a href="https://discord.gg/BFNzpUtE">Discord.</p>
             <p>Best,
             <br>

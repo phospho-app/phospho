@@ -48,7 +48,7 @@ function SetupSessionCallout() {
                 </CardDescription>
               </div>
               <Link
-                href="https://docs.phospho.ai/analytics/sessions-and-users"
+                href="https://phospho-app.github.io/docs/analytics/sessions-and-users"
                 target="_blank"
               >
                 <Button variant="default">Setup session tracking</Button>

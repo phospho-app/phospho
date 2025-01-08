@@ -73,7 +73,7 @@ export function LabelTasksCallout() {
                   API.
                 </p>
                 <Link
-                  href="https://docs.phospho.ai/guides/evaluation"
+                  href="https://phospho-app.github.io/docs/guides/evaluation"
                   target="_blank"
                 >
                   <Button variant="default">Learn more</Button>
